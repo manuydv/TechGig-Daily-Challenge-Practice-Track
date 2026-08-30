@@ -1,0 +1,94 @@
+import { useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from "react-native";
+import { Redirect, router } from "expo-router";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
+import TextField from "@/components/TextField";
+import Button from "@/components/Button";
+import LoadingScreen from "@/components/LoadingScreen";
+import { colors } from "@/lib/theme";
+
+export default function CreateStudioScreen() {
+  const { session, staffUser, loading, refreshStaffUser, signOut } = useAuth();
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  if (loading) return <LoadingScreen />;
+  if (!session) return <Redirect href="/login" />;
+  if (staffUser) return <Redirect href="/" />;
+
+  const handleCreate = async () => {
+    setError(null);
+    if (!name.trim()) {
+      setError("Give your studio a name.");
+      return;
+    }
+    setSubmitting(true);
+    const { error: rpcError } = await supabase.rpc("create_studio", { studio_name: name.trim() });
+    if (rpcError) {
+      setSubmitting(false);
+      setError(rpcError.message);
+      return;
+    }
+    await refreshStaffUser();
+    setSubmitting(false);
+    router.replace("/");
+  };
+
+  return (
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <Text style={styles.title}>Set up your studio</Text>
+        <Text style={styles.subtitle}>You can invite staff and customize settings later.</Text>
+
+        <TextField
+          label="Studio name"
+          value={name}
+          onChangeText={setName}
+          placeholder="e.g. Tara Shakti Yoga Studio"
+          autoCapitalize="words"
+        />
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <Button title="Create studio" onPress={handleCreate} loading={submitting} disabled={!name.trim()} />
+        <Text style={styles.signOut} onPress={signOut}>
+          Sign out
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1, backgroundColor: colors.background },
+  container: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: 24,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: colors.text,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 15,
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 28,
+  },
+  error: {
+    color: colors.danger,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  signOut: {
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: 20,
+  },
+});
