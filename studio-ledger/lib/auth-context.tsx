@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 import type { Session } from "@supabase/supabase-js";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { supabase, SUPABASE_AUTH_STORAGE_KEY, REQUEST_TIMEOUT_MS } from "@/lib/supabase";
+import { supabase, clearStoredSession, REQUEST_TIMEOUT_MS } from "@/lib/supabase";
 import type { StaffUser, Studio } from "@/types/database";
 
 interface AuthContextValue {
@@ -67,11 +66,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // resolves (e.g. a background token refresh stalls on a bad network), the
   // lock stays "held" forever and every later auth call queues up behind it
   // indefinitely, with no error — confirmed on-device (signOut logged that
-  // it was called, then never logged a result). Writing straight to
-  // AsyncStorage and resetting local state sidesteps that lock entirely.
+  // it was called, then never logged a result). Clearing the stored session
+  // and resetting local state directly sidesteps that lock entirely.
+  //
+  // Goes through clearStoredSession (lib/supabase.ts), not raw AsyncStorage
+  // — that keeps the in-memory mirror our storage wrapper keeps in sync too,
+  // so a stale session can't come back from the mirror on the next read.
   const clearLocalSession = useCallback(async () => {
     try {
-      await AsyncStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
+      await clearStoredSession();
     } catch (err) {
       console.log("[auth-context] clearLocalSession: storage clear threw", err);
     }

@@ -49,35 +49,61 @@ function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise
 }
 
 const STORAGE_TIMEOUT_MS = 5000;
+const TIMED_OUT = Symbol("storage-timed-out");
 
-// supabase-js reads/writes the session through this on every auth call
-// before it ever gets to fetch — so if AsyncStorage itself hangs (a stuck
-// native-module bridge call, not a network issue), every fix aimed at the
-// network layer is powerless, since fetch never even gets invoked. This
-// wraps every call with the same guaranteed-to-settle pattern used for
-// fetch: getItem falls back to null (treated as "no stored session") and
-// set/removeItem just give up quietly, rather than leaving the caller
-// pending forever.
-function raceStorage<T>(real: Promise<T>, fallback: T, label: string): Promise<T> {
+// A simple in-memory mirror of whatever's been read/written through this
+// wrapper. This matters for more than just responsiveness: @supabase/auth-js
+// re-reads storage from scratch on *every single* getSession() call — it
+// never trusts an in-memory session (see GoTrueClient's __loadSession,
+// which unconditionally awaits storage before doing anything else) — and
+// getSession() is what every authenticated query calls first to attach a
+// token. On this device every AsyncStorage call has been observed to hang
+// rather than fail fast, so without this mirror, our timeout fallback
+// returning null would make every query *after the first* look logged-out
+// to Supabase and get sent with the anon key instead of the real user's
+// token — explaining both the multi-second stall on every screen change
+// (waiting out the guaranteed timeout) and queries silently coming back
+// empty afterward (RLS correctly treating an anon-keyed request as
+// unauthenticated). Falling back to this mirror instead of null on a
+// timeout fixes that without needing AsyncStorage to actually work.
+const memoryMirror = new Map<string, string>();
+
+function raceStorage<T>(real: Promise<T>, label: string): Promise<T | typeof TIMED_OUT> {
   let timeoutId: ReturnType<typeof setTimeout>;
-  const timeout = new Promise<T>((resolve) => {
+  const timeout = new Promise<typeof TIMED_OUT>((resolve) => {
     timeoutId = setTimeout(() => {
-      console.log(`[storage] ${label} TIMED OUT, falling back:`, fallback);
-      resolve(fallback);
+      console.log(`[storage] ${label} TIMED OUT`);
+      resolve(TIMED_OUT);
     }, STORAGE_TIMEOUT_MS);
   });
-  // Clearing the timer once either side settles matters more here than it
-  // did for fetch: this storage wrapper gets called repeatedly by
-  // supabase-js's background auto-refresh timer, so leaving a stray 5s
-  // timer running on every call (even ones that resolved instantly) piles
-  // up over time and can bog down the JS thread on its own.
   return Promise.race([real, timeout]).finally(() => clearTimeout(timeoutId));
 }
 
 const timeoutSafeStorage = {
-  getItem: (key: string) => raceStorage(AsyncStorage.getItem(key), null, `getItem(${key})`),
-  setItem: (key: string, value: string) => raceStorage(AsyncStorage.setItem(key, value), undefined, `setItem(${key})`),
-  removeItem: (key: string) => raceStorage(AsyncStorage.removeItem(key), undefined, `removeItem(${key})`),
+  getItem: async (key: string): Promise<string | null> => {
+    const result = await raceStorage(AsyncStorage.getItem(key), `getItem(${key})`);
+    if (result === TIMED_OUT) {
+      return memoryMirror.has(key) ? memoryMirror.get(key)! : null;
+    }
+    if (result !== null) {
+      memoryMirror.set(key, result);
+    } else {
+      memoryMirror.delete(key);
+    }
+    return result;
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    // Set eagerly, not only after the real write settles — a caller that
+    // reads this key again immediately (as getSession() does constantly)
+    // should see the value it just wrote even if the underlying storage
+    // write itself is one of the ones that hangs.
+    memoryMirror.set(key, value);
+    await raceStorage(AsyncStorage.setItem(key, value), `setItem(${key})`);
+  },
+  removeItem: async (key: string): Promise<void> => {
+    memoryMirror.delete(key);
+    await raceStorage(AsyncStorage.removeItem(key), `removeItem(${key})`);
+  },
 };
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
@@ -88,12 +114,10 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     // token needs refreshing. On-device logs showed *every* storage read
     // timing out on this device, and with the timer re-triggering one
     // before the last had even given up, that piled up an ever-growing
-    // stack of pending 5s timers — which was almost certainly why taps
-    // (like the drawer's close button) started feeling unresponsive: not a
-    // touch-handling bug, just the JS thread bogged down by all of it.
-    // We don't lose correctness by turning it off — every request already
-    // checks/refreshes the token on demand via _getAccessToken when it's
-    // actually used, this only removes the redundant proactive polling.
+    // stack of pending 5s timers, bogging down the JS thread. We don't lose
+    // correctness by turning it off — every request already checks/
+    // refreshes the token on demand via _getAccessToken when it's actually
+    // used; this only removes the redundant proactive background polling.
     autoRefreshToken: false,
     persistSession: true,
     detectSessionInUrl: false,
@@ -105,6 +129,14 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 
 // The AsyncStorage key supabase-js stores the session under (it derives this
 // itself internally; duplicated here so auth-context can clear it directly
-// as a last-resort recovery path — see the comment on signOut there).
+// as a last-resort recovery path — see the comment on signOut there). Goes
+// through the same timeoutSafeStorage.removeItem as everything else, not
+// raw AsyncStorage, so the in-memory mirror above gets cleared too —
+// otherwise a stale session would keep coming back from the mirror on the
+// next getItem even after "signing out".
 const projectRef = new URL(supabaseUrl).hostname.split(".")[0];
 export const SUPABASE_AUTH_STORAGE_KEY = `sb-${projectRef}-auth-token`;
+
+export function clearStoredSession(): Promise<void> {
+  return timeoutSafeStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
+}
