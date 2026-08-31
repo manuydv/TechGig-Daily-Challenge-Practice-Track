@@ -170,23 +170,152 @@
     });
   });
 
-  /* ---------------- Collection card links → prefill enquiry form ---------------- */
+  /* ---------------- Enquiry form prefill helper ---------------- */
   const interestSelect = document.getElementById("interest");
   const messageField = document.getElementById("message");
+  function prefillEnquiry(collection, message) {
+    if (interestSelect) {
+      [...interestSelect.options].forEach((opt) => {
+        if (opt.value === collection || opt.textContent === collection) {
+          interestSelect.value = opt.value;
+        }
+      });
+    }
+    if (messageField) messageField.value = message;
+  }
+  function goToContact() {
+    document.getElementById("contact")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+  }
+
+  /* ---------------- Product lightbox ---------------- */
+  const lightbox = document.getElementById("lightbox");
+  const lightboxImg = document.getElementById("lightboxImg");
+  const lightboxEyebrow = document.getElementById("lightboxEyebrow");
+  const lightboxTitle = document.getElementById("lightboxTitle");
+  const lightboxDesc = document.getElementById("lightboxDesc");
+  const lightboxMeta = document.getElementById("lightboxMeta");
+  const lightboxPrice = document.getElementById("lightboxPrice");
+  const lightboxThumbs = document.getElementById("lightboxThumbs");
+  const lightboxCta = document.getElementById("lightboxCta");
+  const lightboxPrev = document.getElementById("lightboxPrev");
+  const lightboxNext = document.getElementById("lightboxNext");
+  const lightboxClose = document.getElementById("lightboxClose");
+
+  let lbImages = [];
+  let lbIndex = 0;
+  let lastFocused = null;
+
+  function renderLightboxImage() {
+    const img = lbImages[lbIndex];
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt || "";
+    lightboxThumbs.querySelectorAll(".lightbox-thumb").forEach((t, i) => {
+      t.classList.toggle("is-active", i === lbIndex);
+    });
+    const multi = lbImages.length > 1;
+    lightboxPrev.hidden = !multi;
+    lightboxNext.hidden = !multi;
+  }
+
+  function openLightbox({ images, eyebrow, title, desc, meta, price, ctaText, onCta }) {
+    lbImages = images;
+    lbIndex = 0;
+    lightboxEyebrow.textContent = eyebrow || "";
+    lightboxTitle.textContent = title || "";
+    lightboxDesc.textContent = desc || "";
+    lightboxMeta.textContent = meta || "";
+    lightboxPrice.textContent = price || "";
+    lightboxThumbs.innerHTML = "";
+    if (images.length > 1) {
+      images.forEach((img, i) => {
+        const b = document.createElement("button");
+        b.className = "lightbox-thumb";
+        b.innerHTML = `<img src="${img.src}" alt="" />`;
+        b.addEventListener("click", () => { lbIndex = i; renderLightboxImage(); });
+        lightboxThumbs.appendChild(b);
+      });
+    }
+    lightboxCta.textContent = ctaText || "";
+    lightboxCta.onclick = () => { closeLightbox(); onCta && onCta(); };
+    renderLightboxImage();
+    lastFocused = document.activeElement;
+    lightbox.classList.add("is-open");
+    lightbox.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    lightboxClose.focus();
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove("is-open");
+    lightbox.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    lastFocused && lastFocused.focus();
+  }
+
+  lightboxClose.addEventListener("click", closeLightbox);
+  lightbox.addEventListener("click", (e) => { if (e.target === lightbox) closeLightbox(); });
+  lightboxPrev.addEventListener("click", () => { lbIndex = (lbIndex - 1 + lbImages.length) % lbImages.length; renderLightboxImage(); });
+  lightboxNext.addEventListener("click", () => { lbIndex = (lbIndex + 1) % lbImages.length; renderLightboxImage(); });
+  document.addEventListener("keydown", (e) => {
+    if (!lightbox.classList.contains("is-open")) return;
+    if (e.key === "Escape") closeLightbox();
+    if (e.key === "ArrowLeft") lightboxPrev.click();
+    if (e.key === "ArrowRight") lightboxNext.click();
+  });
+
+  /* ---------------- Signature piece cards → zoomed detail lightbox ---------------- */
+  document.querySelectorAll(".piece-card").forEach((card) => {
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+    const open = () => {
+      const img = card.querySelector(".piece-photo img");
+      const tag = card.querySelector(".piece-tag")?.textContent || "";
+      const title = card.querySelector("h3")?.textContent || "";
+      const desc = card.querySelector("p")?.textContent || "";
+      const meta = card.querySelector(".piece-meta")?.textContent || "";
+      const price = card.querySelector(".piece-price")?.textContent || "";
+      openLightbox({
+        images: [{ src: img.src, alt: img.alt }],
+        eyebrow: `Signature Piece — ${tag}`,
+        title, desc, meta, price,
+        ctaText: "Enquire About This Piece",
+        onCta: () => {
+          prefillEnquiry("Women's Collection", `I'm interested in the ${title} (Signature Piece).`);
+          goToContact();
+        },
+      });
+    };
+    card.addEventListener("click", open);
+    card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+  });
+
+  /* ---------------- Our Range cards → gallery lightbox / enquiry prefill ---------------- */
   document.querySelectorAll(".card-link-wrap").forEach((link) => {
-    link.addEventListener("click", () => {
+    link.addEventListener("click", (e) => {
       const category = link.dataset.category;
       const collection = link.dataset.collection;
-      if (interestSelect) {
-        [...interestSelect.options].forEach((opt) => {
-          if (opt.value === collection || opt.textContent === collection) {
-            interestSelect.value = opt.value;
-          }
+      const photoBox = link.querySelector(".card-photo");
+      if (photoBox) {
+        e.preventDefault();
+        const images = [...photoBox.querySelectorAll("img")].map((img) => ({ src: img.src, alt: img.alt }));
+        const desc = link.querySelector("p")?.textContent || "";
+        openLightbox({
+          images,
+          eyebrow: collection,
+          title: category,
+          desc,
+          meta: images.length > 1 ? `${images.length} photos in this range` : "",
+          price: "",
+          ctaText: "Enquire About This Range",
+          onCta: () => {
+            prefillEnquiry(collection, `I'd like more information on the ${category} range.`);
+            goToContact();
+          },
         });
+        return;
       }
-      if (messageField && !messageField.value) {
-        messageField.value = `I'd like more information on the ${category} range.`;
-      }
+      // no photos yet for this category — fall back to jumping straight to the enquiry form
+      prefillEnquiry(collection, `I'd like more information on the ${category} range.`);
     });
   });
 
