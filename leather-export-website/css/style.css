@@ -282,12 +282,12 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
 /* ==========================================================================
    Collections
    ========================================================================== */
-.collections{ padding:140px 0 120px; background:var(--paper); }
+.collections{ padding:140px 0 120px; background:#f1e8d6; border-top:1px solid var(--line-light); }
 .section-head{ max-width:640px; margin-bottom:56px; }
 .section-head-light{ color:var(--cream); }
 .section-head-light .eyebrow{ color:var(--gold); }
 
-.tabs{ display:inline-flex; gap:6px; padding:6px; background:#efe6d5; border-radius:999px; margin-bottom:48px; }
+.tabs{ display:inline-flex; gap:6px; padding:6px; background:#efe6d5; border:1px solid var(--line-light); border-radius:999px; margin-bottom:48px; }
 .tab{
   border:none; background:none; padding:12px 26px; border-radius:999px; cursor:pointer;
   font-size:0.82rem; letter-spacing:0.06em; text-transform:uppercase; color:#6b5a45;
@@ -324,7 +324,7 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
 /* ==========================================================================
    Signature Pieces
    ========================================================================== */
-.signature{ padding:0 0 120px; background:var(--paper); }
+.signature{ padding:110px 0 120px; background:var(--paper); }
 .piece-card{ display:flex; flex-direction:column; padding:20px 20px 26px; }
 .piece-tag{
   position:absolute; top:34px; right:34px; font-size:0.68rem; letter-spacing:0.1em;
