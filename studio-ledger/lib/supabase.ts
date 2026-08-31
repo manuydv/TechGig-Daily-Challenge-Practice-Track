@@ -36,41 +36,27 @@ export const REQUEST_TIMEOUT_MS = 15000;
 // the abort call is kept alongside it purely to stop wasting the
 // connection when it does work.
 function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  // TEMPORARY diagnostic logging while chasing a "gets stuck" report —
-  // remove once resolved.
-  const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
-  const start = Date.now();
-  console.log("[fetch] start:", url);
-
   const controller = new AbortController();
   const abortTimeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  // Bug fixed here: this timer's id used to go uncaptured, so only the
-  // abort timer above ever got cleared. Once the real fetch already won
-  // the race, this one kept running anyway and fired its console.log (and
-  // a reject() that Promise.race just silently ignores, since it had
-  // already settled) a full REQUEST_TIMEOUT_MS later regardless — which is
-  // exactly what produced a wall of misleading "TIMED OUT" lines in the
-  // logs for requests that had already succeeded. Harmless to the actual
-  // request, but very misleading diagnostically. Capturing and clearing it
-  // alongside the abort timer fixes both.
+  // Both timers are captured and cleared below. An earlier version only
+  // captured the abort timer; once the real fetch already won the race,
+  // this one kept running anyway and fired its reject() a full
+  // REQUEST_TIMEOUT_MS later regardless (Promise.race just silently
+  // ignores a second settlement) — harmless to the actual request, but it
+  // produced a wall of misleading "timed out" diagnostics for requests
+  // that had already succeeded.
   let rejectTimeoutId: ReturnType<typeof setTimeout>;
   const timeout = new Promise<Response>((_, reject) => {
     rejectTimeoutId = setTimeout(() => {
-      console.log(`[fetch] TIMED OUT after ${Date.now() - start}ms:`, url);
       reject(new Error("Request timed out. Check your connection and try again."));
     }, REQUEST_TIMEOUT_MS);
   });
 
-  return Promise.race([fetch(input, { ...init, signal: controller.signal }), timeout])
-    .then((res) => {
-      console.log(`[fetch] done in ${Date.now() - start}ms:`, url);
-      return res;
-    })
-    .finally(() => {
-      clearTimeout(abortTimeoutId);
-      clearTimeout(rejectTimeoutId);
-    });
+  return Promise.race([fetch(input, { ...init, signal: controller.signal }), timeout]).finally(() => {
+    clearTimeout(abortTimeoutId);
+    clearTimeout(rejectTimeoutId);
+  });
 }
 
 // A real (working) AsyncStorage read/write on-device normally takes low
@@ -99,20 +85,17 @@ const TIMED_OUT = Symbol("storage-timed-out");
 // timeout fixes that without needing AsyncStorage to actually work.
 const memoryMirror = new Map<string, string>();
 
-function raceStorage<T>(real: Promise<T>, label: string): Promise<T | typeof TIMED_OUT> {
+function raceStorage<T>(real: Promise<T>): Promise<T | typeof TIMED_OUT> {
   let timeoutId: ReturnType<typeof setTimeout>;
   const timeout = new Promise<typeof TIMED_OUT>((resolve) => {
-    timeoutId = setTimeout(() => {
-      console.log(`[storage] ${label} TIMED OUT`);
-      resolve(TIMED_OUT);
-    }, STORAGE_TIMEOUT_MS);
+    timeoutId = setTimeout(() => resolve(TIMED_OUT), STORAGE_TIMEOUT_MS);
   });
   return Promise.race([real, timeout]).finally(() => clearTimeout(timeoutId));
 }
 
 const timeoutSafeStorage = {
   getItem: async (key: string): Promise<string | null> => {
-    const result = await raceStorage(AsyncStorage.getItem(key), `getItem(${key})`);
+    const result = await raceStorage(AsyncStorage.getItem(key));
     if (result === TIMED_OUT) {
       return memoryMirror.has(key) ? memoryMirror.get(key)! : null;
     }
@@ -129,11 +112,11 @@ const timeoutSafeStorage = {
     // should see the value it just wrote even if the underlying storage
     // write itself is one of the ones that hangs.
     memoryMirror.set(key, value);
-    await raceStorage(AsyncStorage.setItem(key, value), `setItem(${key})`);
+    await raceStorage(AsyncStorage.setItem(key, value));
   },
   removeItem: async (key: string): Promise<void> => {
     memoryMirror.delete(key);
-    await raceStorage(AsyncStorage.removeItem(key), `removeItem(${key})`);
+    await raceStorage(AsyncStorage.removeItem(key));
   },
 };
 

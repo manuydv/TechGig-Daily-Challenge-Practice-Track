@@ -75,8 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearLocalSession = useCallback(async () => {
     try {
       await clearStoredSession();
-    } catch (err) {
-      console.log("[auth-context] clearLocalSession: storage clear threw", err);
+    } catch {
+      // Local state below is cleared regardless; a storage-clear failure
+      // just means the mirror/stored session may reappear on next launch.
     }
     setSession(null);
     setStaffUser(null);
@@ -109,7 +110,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const safetyTimer = setTimeout(() => {
       if (mounted && !settled) {
         settled = true;
-        console.log("[auth-context] initial session check timed out; clearing local session");
         clearLocalSession().finally(() => {
           if (mounted) setLoading(false);
         });
@@ -151,7 +151,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // first, so the deferred call acquires a free lock instead of queuing
     // behind itself.
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      console.log("[auth-context] onAuthStateChange:", _event);
       setSession(nextSession);
       setTimeout(() => {
         loadStaffUser(nextSession?.user.id).finally(finishInitialLoad);
@@ -174,9 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadStudio, staffUser?.studio_id]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    console.log("[auth-context] signIn: called");
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    console.log("[auth-context] signIn: settled, error =", error?.message ?? null);
     return { error: error?.message ?? null };
   }, []);
 
@@ -189,7 +186,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    console.log("[auth-context] signOut: called");
     // See clearLocalSession's comment: supabase.auth.signOut() itself can
     // hang forever if the client's internal lock is stuck, so it's not
     // called (or awaited) on the critical path anymore. Best-effort fire it
@@ -197,7 +193,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // the refresh token gets revoked server-side — but nothing waits on it.
     supabase.auth.signOut().catch(() => {});
     await clearLocalSession();
-    console.log("[auth-context] signOut: local state cleared");
   }, [clearLocalSession]);
 
   const value = useMemo(

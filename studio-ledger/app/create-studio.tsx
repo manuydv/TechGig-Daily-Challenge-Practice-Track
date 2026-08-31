@@ -23,38 +23,29 @@ export default function CreateStudioScreen() {
   if (staffUser) return <Redirect href="/" />;
 
   const handleCreate = async () => {
-    // TEMPORARY diagnostic logging while chasing a stuck-request report —
-    // remove once resolved. Watch the Metro terminal when tapping the button.
-    console.log("[create-studio] handleCreate: called");
     setError(null);
     if (!name.trim()) {
       setError("Give your shop a name.");
       return;
     }
     setSubmitting(true);
-    console.log("[create-studio] handleCreate: calling create_studio RPC");
     const { error: rpcError } = await supabase.rpc("create_studio", {
       studio_name: name.trim(),
       business_type: businessType,
     });
-    console.log("[create-studio] handleCreate: RPC settled, error =", rpcError?.message ?? null);
     if (rpcError) {
       setSubmitting(false);
       setError(rpcError.message);
       return;
     }
-    console.log("[create-studio] handleCreate: refreshing staff user");
     await refreshStaffUser();
-    console.log("[create-studio] handleCreate: done, navigating");
     setSubmitting(false);
     router.replace("/");
   };
 
   const handleSignOut = async () => {
-    console.log("[create-studio] handleSignOut: called");
     setSigningOut(true);
     await signOut();
-    console.log("[create-studio] handleSignOut: settled");
     setSigningOut(false);
   };
 
