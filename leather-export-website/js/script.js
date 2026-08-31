@@ -201,14 +201,32 @@
   const lightboxNext = document.getElementById("lightboxNext");
   const lightboxClose = document.getElementById("lightboxClose");
 
+  const lightboxMedia = document.querySelector(".lightbox-media");
   let lbImages = [];
   let lbIndex = 0;
   let lastFocused = null;
 
+  function sampleImageBackground(imgEl) {
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext("2d");
+      // sample a corner pixel — a couple px in to avoid any edge/compression noise
+      ctx.drawImage(imgEl, 2, 2, 1, 1, 0, 0, 1, 1);
+      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+      lightboxMedia.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+    } catch (e) {
+      lightboxMedia.style.backgroundColor = "";
+    }
+  }
+
   function renderLightboxImage() {
     const img = lbImages[lbIndex];
-    lightboxImg.src = img.src;
     lightboxImg.alt = img.alt || "";
+    lightboxImg.onload = () => sampleImageBackground(lightboxImg);
+    lightboxImg.src = img.src;
+    if (lightboxImg.complete && lightboxImg.naturalWidth) sampleImageBackground(lightboxImg);
     lightboxThumbs.querySelectorAll(".lightbox-thumb").forEach((t, i) => {
       t.classList.toggle("is-active", i === lbIndex);
     });

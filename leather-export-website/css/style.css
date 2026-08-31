@@ -511,17 +511,17 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
 }
 .lightbox-close:hover{ border-color:var(--gold); color:var(--gold); background:rgba(22,17,13,0.92); }
 .lightbox-inner{
-  display:flex; align-items:flex-start; width:100%; max-width:1160px; max-height:86vh;
+  display:flex; align-items:center; width:100%; max-width:1160px; max-height:86vh;
   opacity:0; transition:opacity .4s var(--ease-soft);
 }
 .lightbox.is-open .lightbox-inner{ opacity:1; }
 .lightbox-media{
-  position:relative; flex:0 0 auto; width:min(40vw, 460px); aspect-ratio:2/3; max-height:78vh;
+  position:relative; flex:1.3; min-width:0; max-height:80vh;
   display:flex; align-items:center; justify-content:center;
   background:#f0f0f0; border-radius:18px; overflow:hidden; margin-right:48px;
-  contain:paint; isolation:isolate;
+  contain:paint; isolation:isolate; transition:background-color .3s ease;
 }
-.lightbox-media img{ width:100%; height:100%; object-fit:cover; }
+.lightbox-media img{ width:100%; height:100%; object-fit:contain; }
 .lightbox-nav{
   position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:50%;
   border:1px solid rgba(22,17,13,.12); background:rgba(255,255,255,.85); color:var(--ink);
@@ -555,7 +555,7 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
 @media (max-width: 900px){
   .lightbox{ padding:20px; align-items:flex-start; }
   .lightbox-inner{ flex-direction:column; max-height:none; overflow-y:auto; }
-  .lightbox-media{ flex:none; width:100%; aspect-ratio:4/5; max-height:56vh; margin-right:0; margin-bottom:26px; }
+  .lightbox-media{ flex:none; width:100%; height:44vh; margin-right:0; margin-bottom:26px; }
   .lightbox-desc{ max-width:none; }
 }
 
