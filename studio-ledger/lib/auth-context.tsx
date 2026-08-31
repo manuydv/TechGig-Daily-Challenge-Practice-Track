@@ -129,10 +129,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => finishInitialLoad());
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+    // NOT async, and deliberately doesn't await loadStaffUser directly.
+    //
+    // Root cause of the hangs traced all the way through: supabase-js
+    // awaits every onAuthStateChange listener (via _notifyAllSubscribers)
+    // from *inside* the lock-guarded call that triggered the event (sign
+    // in/out, token refresh) — before that call releases its lock. Calling
+    // any supabase.from()/rpc() here (which needs a fresh-token check, i.e.
+    // another lock acquisition) therefore deadlocks: the nested call waits
+    // for the triggering operation to finish, which is itself waiting for
+    // this callback to return first. No network or storage timeout can
+    // catch this — it's two in-memory promises waiting on each other.
+    // Confirmed by reading @supabase/auth-js's source (GoTrueClient's
+    // _acquireLock/_notifyAllSubscribers); this is a known supabase-js
+    // gotcha, not specific to this app. Deferring the real work to a
+    // separate macrotask lets this callback (and therefore the lock) return
+    // first, so the deferred call acquires a free lock instead of queuing
+    // behind itself.
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      console.log("[auth-context] onAuthStateChange:", _event);
       setSession(nextSession);
-      await loadStaffUser(nextSession?.user.id);
-      finishInitialLoad();
+      setTimeout(() => {
+        loadStaffUser(nextSession?.user.id).finally(finishInitialLoad);
+      }, 0);
     });
 
     return () => {
