@@ -13,11 +13,27 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+const REQUEST_TIMEOUT_MS = 15000;
+
+// Every request the client makes — auth, queries, RPCs — goes through this
+// fetch. Without a timeout, a stalled connection leaves a promise pending
+// forever with no error, which shows up as a screen stuck on a spinner with
+// nothing to retry. Aborting after a timeout turns that into a normal
+// error the UI already knows how to display.
+function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timeoutId));
+}
+
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+  },
+  global: {
+    fetch: fetchWithTimeout,
   },
 });
