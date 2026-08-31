@@ -93,7 +93,20 @@ before committing the upgrade.
 
 ## What's next (later phases, not built here)
 
-- Reminders: Twilio/SMS + email via a daily cron Edge Function.
-- Multi-studio onboarding and staff invites with roles.
-- Dashboards (status breakdown, gender split, joins over time).
-- Billing via Razorpay/Stripe subscriptions.
+- **Phase 2 — Reminders**: Twilio/SMS + email via a daily cron Edge Function.
+- **Phase 3 — Multi-studio onboarding**: studio sign-up flow, staff invites
+  with roles, dashboards (status breakdown, gender split, joins over time).
+  - In-app onboarding checklist for a new studio's first session (e.g. "Add
+    your first member → Mark your first payment") — only useful once
+    studios are onboarding themselves, so it belongs here, not Phase 1.
+  - Product analytics (e.g. PostHog) to see which features studios actually
+    use and where they drop off — same reasoning, needs multiple real
+    studios to be worth anything.
+- **Phase 4 — Billing**: Razorpay/Stripe subscriptions, trial period, paywall.
+- **Phase 5 — Polish and store submission**: app icons, onboarding screens,
+  push notification permissions, iOS App Store + Google Play submission.
+
+A marketing website (with its own social preview image, subdomain, and
+sitemap.xml) is intentionally not on this roadmap yet — the app is
+distributed through app stores, not a website, and there's no separate
+marketing site planned for now.
