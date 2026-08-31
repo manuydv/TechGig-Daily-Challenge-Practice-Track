@@ -124,12 +124,13 @@ with Expo Go on a physical device.
   module resolution settings, even though the schema types are correct. If
   you bump this dependency, run `npx tsc --noEmit` and confirm it's still
   clean before committing the upgrade.
-- **Expo SDK is pinned to 56**, one behind the newest (57). The Expo Go app
-  on the App Store/Play Store hadn't picked up SDK 57 support yet, which
-  shows as *"Project is incompatible with this version of Expo Go"* on
-  device even after updating Expo Go. Before bumping to SDK 57 (or later),
-  confirm the current Expo Go release actually supports it — otherwise
-  everyone testing via Expo Go breaks.
+- **Expo SDK is pinned to 54**, two behind the newest published to npm (57).
+  The installed Expo Go app's own Settings screen (App Info → "Supported
+  SDK") is the ground truth for what it actually runs — reinstalling Expo Go
+  from the App Store does *not* guarantee it supports the newest SDK on npm;
+  it can lag by more than one version. Mismatch shows as *"Project is
+  incompatible with this version of Expo Go"* on device. Before bumping this
+  project's SDK, check that field on an actual device first.
 
 ## What's next (later phases, not built here)
 
