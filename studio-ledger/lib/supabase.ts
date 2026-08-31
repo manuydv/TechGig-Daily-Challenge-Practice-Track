@@ -43,10 +43,20 @@ function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise
   console.log("[fetch] start:", url);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const abortTimeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+  // Bug fixed here: this timer's id used to go uncaptured, so only the
+  // abort timer above ever got cleared. Once the real fetch already won
+  // the race, this one kept running anyway and fired its console.log (and
+  // a reject() that Promise.race just silently ignores, since it had
+  // already settled) a full REQUEST_TIMEOUT_MS later regardless — which is
+  // exactly what produced a wall of misleading "TIMED OUT" lines in the
+  // logs for requests that had already succeeded. Harmless to the actual
+  // request, but very misleading diagnostically. Capturing and clearing it
+  // alongside the abort timer fixes both.
+  let rejectTimeoutId: ReturnType<typeof setTimeout>;
   const timeout = new Promise<Response>((_, reject) => {
-    setTimeout(() => {
+    rejectTimeoutId = setTimeout(() => {
       console.log(`[fetch] TIMED OUT after ${Date.now() - start}ms:`, url);
       reject(new Error("Request timed out. Check your connection and try again."));
     }, REQUEST_TIMEOUT_MS);
@@ -57,7 +67,10 @@ function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise
       console.log(`[fetch] done in ${Date.now() - start}ms:`, url);
       return res;
     })
-    .finally(() => clearTimeout(timeoutId));
+    .finally(() => {
+      clearTimeout(abortTimeoutId);
+      clearTimeout(rejectTimeoutId);
+    });
 }
 
 // A real (working) AsyncStorage read/write on-device normally takes low

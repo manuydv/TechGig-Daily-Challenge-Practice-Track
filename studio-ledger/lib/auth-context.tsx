@@ -122,16 +122,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (mounted) setLoading(false);
     };
 
-    supabase.auth
-      .getSession()
-      .then(async ({ data }) => {
-        if (!mounted) return;
-        setSession(data.session);
-        await loadStaffUser(data.session?.user.id);
-        finishInitialLoad();
-      })
-      .catch(() => finishInitialLoad());
-
+    // Deliberately no separate supabase.auth.getSession() call here.
+    // GoTrueClient emits an INITIAL_SESSION event through onAuthStateChange
+    // automatically as soon as it subscribes (see its _emitInitialSession),
+    // carrying exactly the same info a manual getSession() call would — so
+    // having both was pure duplication. Confirmed on-device: every load was
+    // firing the staff_users and studios queries 3 times each concurrently
+    // (getSession().then(), plus onAuthStateChange firing twice — once for
+    // INITIAL_SESSION, once for the real event). Relying solely on
+    // onAuthStateChange below is also the pattern Supabase's own docs
+    // recommend for this reason.
+    //
     // NOT async, and deliberately doesn't await loadStaffUser directly.
     //
     // Root cause of the hangs traced all the way through: supabase-js
