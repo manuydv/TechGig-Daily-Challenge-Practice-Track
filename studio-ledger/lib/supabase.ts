@@ -36,16 +36,28 @@ export const REQUEST_TIMEOUT_MS = 15000;
 // the abort call is kept alongside it purely to stop wasting the
 // connection when it does work.
 function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  // TEMPORARY diagnostic logging while chasing a "gets stuck" report —
+  // remove once resolved.
+  const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+  const start = Date.now();
+  console.log("[fetch] start:", url);
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   const timeout = new Promise<Response>((_, reject) => {
-    setTimeout(() => reject(new Error("Request timed out. Check your connection and try again.")), REQUEST_TIMEOUT_MS);
+    setTimeout(() => {
+      console.log(`[fetch] TIMED OUT after ${Date.now() - start}ms:`, url);
+      reject(new Error("Request timed out. Check your connection and try again."));
+    }, REQUEST_TIMEOUT_MS);
   });
 
-  return Promise.race([fetch(input, { ...init, signal: controller.signal }), timeout]).finally(() =>
-    clearTimeout(timeoutId)
-  );
+  return Promise.race([fetch(input, { ...init, signal: controller.signal }), timeout])
+    .then((res) => {
+      console.log(`[fetch] done in ${Date.now() - start}ms:`, url);
+      return res;
+    })
+    .finally(() => clearTimeout(timeoutId));
 }
 
 // A real (working) AsyncStorage read/write on-device normally takes low

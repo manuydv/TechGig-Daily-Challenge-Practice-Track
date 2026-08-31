@@ -58,10 +58,15 @@ export default function Drawer() {
   // and picking it again — and doing that repeatedly just kept pushing
   // further, never going back. replace keeps exactly one of these on the
   // stack at a time.
+  // TEMPORARY diagnostic logging while chasing a "gets stuck" report —
+  // remove once resolved.
   const go = (href: string) => {
+    console.log("[drawer] go:", href, "from", pathname);
     closeDrawer();
     if (pathname !== href) {
       router.replace(href as never);
+    } else {
+      console.log("[drawer] go: already on", href, "- skipping replace");
     }
   };
 

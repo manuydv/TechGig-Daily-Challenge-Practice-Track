@@ -28,29 +28,64 @@ export default function FinancialsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // TEMPORARY diagnostic logging while chasing a "gets stuck on Financials"
+  // report — remove once resolved. Each query is timed and logged
+  // individually (instead of one bare Promise.all) so a hang shows up as a
+  // specific query that never logs "done", rather than just silence.
   const load = useCallback(async () => {
-    if (!staffUser) return;
+    console.log("[financials] load: called, staffUser =", staffUser?.id ?? null);
+    if (!staffUser) {
+      console.log("[financials] load: no staffUser yet, bailing without clearing loading");
+      return;
+    }
     setError(null);
     const months = recentMonths(LOOKBACK_MONTHS);
     const sinceDate = new Date();
     sinceDate.setMonth(sinceDate.getMonth() - LOOKBACK_MONTHS);
     const since = sinceDate.toISOString().slice(0, 10);
 
+    const timed = <T,>(label: string, p: PromiseLike<T>): Promise<T> => {
+      console.log(`[financials] ${label}: starting`);
+      const start = Date.now();
+      return Promise.resolve(p).then(
+        (res) => {
+          console.log(`[financials] ${label}: done in ${Date.now() - start}ms`);
+          return res;
+        },
+        (err) => {
+          console.log(`[financials] ${label}: threw after ${Date.now() - start}ms`, err);
+          throw err;
+        }
+      );
+    };
+
     const [membersRes, paymentsRes, visitsRes, expensesRes, employeesRes] = await Promise.all([
-      supabase.from("members").select("*"),
-      supabase.from("payments").select("*").eq("paid", true).in("month", months),
-      supabase.from("visits").select("*").gte("visited_on", since).not("amount", "is", null),
-      supabase.from("expenses").select("*").gte("expense_date", since).order("expense_date", { ascending: false }),
-      supabase.from("employees").select("*").eq("status", "active"),
+      timed("members query", supabase.from("members").select("*")),
+      timed("payments query", supabase.from("payments").select("*").eq("paid", true).in("month", months)),
+      timed(
+        "visits query",
+        supabase.from("visits").select("*").gte("visited_on", since).not("amount", "is", null)
+      ),
+      timed(
+        "expenses query",
+        supabase.from("expenses").select("*").gte("expense_date", since).order("expense_date", { ascending: false })
+      ),
+      timed("employees query", supabase.from("employees").select("*").eq("status", "active")),
     ]);
+    console.log("[financials] load: all queries settled");
 
     if (membersRes.error) setError(membersRes.error.message);
+    if (paymentsRes.error) console.log("[financials] payments query error:", paymentsRes.error.message);
+    if (visitsRes.error) console.log("[financials] visits query error:", visitsRes.error.message);
+    if (expensesRes.error) console.log("[financials] expenses query error:", expensesRes.error.message);
+    if (employeesRes.error) console.log("[financials] employees query error:", employeesRes.error.message);
     setMembers(membersRes.data ?? []);
     setPayments(paymentsRes.data ?? []);
     setVisits(visitsRes.data ?? []);
     setExpenses(expensesRes.data ?? []);
     setEmployees(employeesRes.data ?? []);
     setLoading(false);
+    console.log("[financials] load: finished");
   }, [staffUser]);
 
   useFocusEffect(
