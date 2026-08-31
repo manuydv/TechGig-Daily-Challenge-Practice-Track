@@ -116,14 +116,20 @@ with Expo Go on a physical device.
   of the form — not built, since there's no marketing/web deployment yet.
   Staff-entered visits work today regardless of this.
 
-## Known dependency pin
+## Known dependency pins
 
-`@supabase/supabase-js` is pinned to `2.54.0` (not a caret range). Newer
-2.5x+ releases shipped a TypeScript typing regression that collapses typed
-`.from(...)` query results to `never` under this project's Expo/TypeScript
-module resolution settings, even though the schema types are correct. If you
-bump this dependency, run `npx tsc --noEmit` and confirm it's still clean
-before committing the upgrade.
+- `@supabase/supabase-js` is pinned to `2.54.0` (not a caret range). Newer
+  2.5x+ releases shipped a TypeScript typing regression that collapses typed
+  `.from(...)` query results to `never` under this project's Expo/TypeScript
+  module resolution settings, even though the schema types are correct. If
+  you bump this dependency, run `npx tsc --noEmit` and confirm it's still
+  clean before committing the upgrade.
+- **Expo SDK is pinned to 56**, one behind the newest (57). The Expo Go app
+  on the App Store/Play Store hadn't picked up SDK 57 support yet, which
+  shows as *"Project is incompatible with this version of Expo Go"* on
+  device even after updating Expo Go. Before bumping to SDK 57 (or later),
+  confirm the current Expo Go release actually supports it — otherwise
+  everyone testing via Expo Go breaks.
 
 ## What's next (later phases, not built here)
 
