@@ -13,7 +13,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-const REQUEST_TIMEOUT_MS = 15000;
+// Exported so callers (e.g. auth-context's own safety timers) can wait
+// strictly longer than this before giving up — otherwise a caller-side
+// timeout that fires first can let a *new* auth action start while the old
+// one is still legitimately in flight underneath, and since supabase-js
+// serializes all auth operations through one internal lock, the new one
+// then queues up behind the old one instead of running, adding another
+// full timeout's worth of wait on top instead of replacing it.
+export const REQUEST_TIMEOUT_MS = 15000;
 
 // Every request the client makes — auth, queries, RPCs — goes through this
 // fetch. Without a timeout, a stalled connection leaves a promise pending

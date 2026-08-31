@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 import type { Session } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { supabase, SUPABASE_AUTH_STORAGE_KEY } from "@/lib/supabase";
+import { supabase, SUPABASE_AUTH_STORAGE_KEY, REQUEST_TIMEOUT_MS } from "@/lib/supabase";
 import type { StaffUser, Studio } from "@/types/database";
 
 interface AuthContextValue {
@@ -88,10 +88,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // with no built-in timeout, so a flaky connection (or the internal lock
     // issue described on clearLocalSession above) can otherwise leave the
     // app stuck on the loading screen forever. This safety net gives up on
-    // the initial load after a few seconds. It also proactively clears
-    // whatever session is stored — if that stored session is what's causing
-    // the hang, leaving it in place would just cause the exact same hang on
-    // every future app launch.
+    // the initial load and proactively clears whatever session is stored —
+    // if that stored session is what's causing the hang, leaving it in
+    // place would just cause the exact same hang on every future launch.
+    //
+    // This MUST wait longer than REQUEST_TIMEOUT_MS (lib/supabase.ts), not
+    // less. supabase-js serializes every auth call through one internal
+    // lock; if we give up here before the underlying getSession() call has
+    // actually finished (which is guaranteed by REQUEST_TIMEOUT_MS, just
+    // not any sooner), the lock is still held when the login screen lets
+    // the user sign in, so that sign-in silently queues up behind the
+    // still-running original call instead of running — and then whatever
+    // the user does after signing in queues up behind *that*. Confirmed
+    // on-device: an 8s timer here (shorter than the 15s fetch timeout)
+    // produced exactly this cascade. Waiting past REQUEST_TIMEOUT_MS
+    // guarantees the lock is free before we ever offer a new action.
     const safetyTimer = setTimeout(() => {
       if (mounted && !settled) {
         settled = true;
@@ -100,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (mounted) setLoading(false);
         });
       }
-    }, 8000);
+    }, REQUEST_TIMEOUT_MS + 3000);
 
     const finishInitialLoad = () => {
       settled = true;
