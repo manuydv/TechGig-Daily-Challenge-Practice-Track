@@ -115,7 +115,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadStudio, staffUser?.studio_id]);
 
   const signIn = useCallback(async (email: string, password: string) => {
+    console.log("[auth-context] signIn: called");
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    console.log("[auth-context] signIn: settled, error =", error?.message ?? null);
     return { error: error?.message ?? null };
   }, []);
 
@@ -128,7 +130,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    // TEMPORARY diagnostic logging while chasing a stuck-request report —
+    // remove once resolved. Watch the Metro terminal when tapping sign out.
+    console.log("[auth-context] signOut: called");
+    try {
+      const { error } = await supabase.auth.signOut();
+      console.log("[auth-context] signOut: settled, error =", error?.message ?? null);
+    } catch (err) {
+      console.log("[auth-context] signOut: threw", err);
+    }
   }, []);
 
   const value = useMemo(
