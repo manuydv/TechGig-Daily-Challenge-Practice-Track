@@ -1,0 +1,138 @@
+import { useEffect, useRef } from "react";
+import { Animated, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useDrawer } from "@/lib/drawer-context";
+import { useAuth } from "@/lib/auth-context";
+import { getBusinessTypeConfig } from "@/lib/businessTypes";
+import { colors } from "@/lib/theme";
+
+const DRAWER_WIDTH = Math.min(300, Dimensions.get("window").width * 0.8);
+
+interface NavItem {
+  label: string;
+  href: string;
+}
+
+export default function Drawer() {
+  const { open, closeDrawer } = useDrawer();
+  const { studio, signOut } = useAuth();
+  const insets = useSafeAreaInsets();
+  const translateX = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(translateX, {
+        toValue: open ? 0 : -DRAWER_WIDTH,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(overlayOpacity, {
+        toValue: open ? 1 : 0,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [open, translateX, overlayOpacity]);
+
+  if (!studio) return null;
+  const config = getBusinessTypeConfig(studio.business_type);
+
+  const navItems: NavItem[] = [
+    { label: config.personLabelPlural, href: "/" },
+    { label: "Financials", href: "/financials" },
+    { label: "Employees", href: "/employees" },
+    { label: "Expenses", href: "/expenses" },
+    { label: "Settings", href: "/settings" },
+  ];
+
+  const go = (href: string) => {
+    closeDrawer();
+    router.push(href as never);
+  };
+
+  return (
+    <>
+      {open ? (
+        <Animated.View
+          pointerEvents={open ? "auto" : "none"}
+          style={[styles.overlay, { opacity: overlayOpacity }]}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={closeDrawer} />
+        </Animated.View>
+      ) : null}
+
+      <Animated.View
+        pointerEvents={open ? "auto" : "none"}
+        style={[
+          styles.panel,
+          { width: DRAWER_WIDTH, paddingTop: insets.top + 16, transform: [{ translateX }] },
+        ]}
+      >
+        <View style={styles.header}>
+          <Text style={styles.shopName} numberOfLines={2}>
+            {studio.name}
+          </Text>
+          <Text style={styles.shopType}>{config.label}</Text>
+        </View>
+
+        <ScrollView contentContainerStyle={styles.navList}>
+          {navItems.map((item) => (
+            <Pressable key={item.href} style={styles.navItem} onPress={() => go(item.href)}>
+              <Text style={styles.navItemText}>{item.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        <Pressable
+          style={[styles.navItem, styles.signOut]}
+          onPress={() => {
+            closeDrawer();
+            signOut();
+          }}
+        >
+          <Text style={styles.signOutText}>Sign out</Text>
+        </Pressable>
+      </Animated.View>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    zIndex: 10,
+  },
+  panel: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    bottom: 0,
+    backgroundColor: colors.card,
+    zIndex: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 2, height: 0 },
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  shopName: { fontSize: 18, fontWeight: "700", color: colors.text },
+  shopType: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
+  navList: { paddingVertical: 8 },
+  navItem: { paddingHorizontal: 20, paddingVertical: 14 },
+  navItemText: { fontSize: 16, fontWeight: "600", color: colors.text },
+  signOut: { borderTopWidth: 1, borderTopColor: colors.border, marginBottom: 12 },
+  signOutText: { fontSize: 15, color: colors.danger, fontWeight: "600" },
+});

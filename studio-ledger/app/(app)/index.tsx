@@ -22,7 +22,7 @@ type StatusFilter = MemberStatus | "all";
 type GenderFilter = Gender | "all";
 
 export default function MemberListScreen() {
-  const { staffUser, studio, signOut } = useAuth();
+  const { staffUser, studio } = useAuth();
   const config = getBusinessTypeConfig(studio?.business_type ?? "yoga_studio");
   const reminderDays = studio?.reminder_days ?? 30;
 
@@ -183,15 +183,6 @@ export default function MemberListScreen() {
       <TouchableOpacity style={styles.fab} onPress={() => router.push("/member/new")}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
-
-      <View style={styles.footerLinks}>
-        <TouchableOpacity onPress={() => router.push("/settings")}>
-          <Text style={styles.footerLinkText}>Settings</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={signOut}>
-          <Text style={styles.footerLinkText}>Sign out</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -255,7 +246,7 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 20,
-    bottom: 76,
+    bottom: 24,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -269,14 +260,4 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   fabText: { color: colors.primaryText, fontSize: 28, lineHeight: 30 },
-  footerLinks: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 20,
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 20,
-  },
-  footerLinkText: { color: colors.textMuted, fontSize: 13 },
 });

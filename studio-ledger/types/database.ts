@@ -2,6 +2,8 @@ export type Gender = "male" | "female" | "other";
 export type MemberStatus = "active" | "paused" | "inactive";
 export type StaffRole = "owner" | "staff";
 export type BusinessType = "yoga_studio" | "gym" | "barbershop" | "salon" | "other";
+export type EmployeeStatus = "active" | "inactive";
+export type ExpenseCategory = "rent" | "cleaning" | "utilities" | "supplies" | "payroll" | "other";
 
 export interface Studio {
   id: string;
@@ -62,6 +64,31 @@ export interface Visit {
   created_at: string;
 }
 
+export interface Employee {
+  id: string;
+  studio_id: string;
+  name: string;
+  role_title: string | null;
+  phone: string | null;
+  email: string | null;
+  monthly_pay: number;
+  status: EmployeeStatus;
+  joined_on: string; // YYYY-MM-DD
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Expense {
+  id: string;
+  studio_id: string;
+  category: ExpenseCategory;
+  description: string | null;
+  amount: number;
+  expense_date: string; // YYYY-MM-DD
+  created_at: string;
+  updated_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -93,6 +120,18 @@ export type Database = {
         Row: Visit;
         Insert: Partial<Visit> & { member_id: string };
         Update: Partial<Visit>;
+        Relationships: [];
+      };
+      employees: {
+        Row: Employee;
+        Insert: Partial<Employee> & { studio_id: string; name: string };
+        Update: Partial<Employee>;
+        Relationships: [];
+      };
+      expenses: {
+        Row: Expense;
+        Insert: Partial<Expense> & { studio_id: string; amount: number };
+        Update: Partial<Expense>;
         Relationships: [];
       };
     };

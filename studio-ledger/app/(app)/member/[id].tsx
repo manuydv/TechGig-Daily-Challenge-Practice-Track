@@ -151,9 +151,15 @@ export default function MemberDetailScreen() {
 
   const togglePaid = async (month: string, nextPaid: boolean) => {
     setMarkingPaid(true);
-    const { error: upsertError } = await supabase
-      .from("payments")
-      .upsert({ member_id: member.id, month, paid: nextPaid }, { onConflict: "member_id,month" });
+    const { error: upsertError } = await supabase.from("payments").upsert(
+      {
+        member_id: member.id,
+        month,
+        paid: nextPaid,
+        amount: nextPaid ? member.monthly_fee : null,
+      },
+      { onConflict: "member_id,month" }
+    );
     setMarkingPaid(false);
     if (upsertError) {
       Alert.alert("Couldn't update payment", upsertError.message);

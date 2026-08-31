@@ -37,13 +37,26 @@ onboarding are also intentionally out of scope for now.
 - **Settings screen**: change business type, the reminder threshold (days
   since last visit) and message, and turn on a public self-serve sign-up
   link for walk-in clients.
+- **Side drawer navigation**: Members/Clients, Financials, Employees,
+  Expenses, Settings, Sign out — opened via the ☰ button in the header.
+- **Financials**: a combined income + expense ledger. Income is membership
+  payments and paid visits; expenses are manually logged entries (rent,
+  cleaning, utilities, supplies, other) plus active employees' monthly pay
+  computed automatically as payroll. Shows this month's totals and a
+  scrollable recent-transactions list.
+- **Employees**: a staff/payroll list (name, role title, monthly pay,
+  active/inactive) — separate from `staff_users` (who can log into the
+  app); an employee here doesn't need an app account.
+- **Expenses**: a simple dated ledger for rent, cleaning, utilities,
+  supplies, or anything else.
 
 ## 1. Set up Supabase
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. Open the SQL Editor and run the migrations **in order**:
    `supabase/migrations/0001_phase1_schema.sql`, then
-   `supabase/migrations/0002_business_types_and_visits.sql`. (Or, with the
+   `supabase/migrations/0002_business_types_and_visits.sql`, then
+   `supabase/migrations/0003_employees_and_expenses.sql`. (Or, with the
    [Supabase CLI](https://supabase.com/docs/guides/cli), `supabase db push`
    from this directory once you've linked the project.)
 3. From **Project Settings → API**, copy the **Project URL** and the
@@ -84,8 +97,14 @@ with Expo Go on a physical device.
 4. **Visit-mode shops** (barbershop/salon): add clients, tap into one to log
    a visit (service + amount). The list badges show who's overdue for a
    reminder based on the shop's configured threshold.
-5. **Settings** (link at the bottom of the list screen): adjust the reminder
-   threshold/message and turn on the self-serve sign-up link.
+5. **Drawer menu** (☰ button, top left): jump to Financials, Employees,
+   Expenses, or Settings, or sign out.
+6. **Financials**: see this month's income vs. expenses (including payroll)
+   and a scrollable ledger of recent transactions.
+7. **Employees**: add staff with a monthly pay amount — they'll show up as
+   payroll in Financials automatically, no separate expense entry needed.
+8. **Expenses**: log a one-off or recurring cost (rent, cleaning, etc.) with
+   a date and amount.
 
 ## Notes on the data model
 
