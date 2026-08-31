@@ -48,7 +48,13 @@ function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise
   );
 }
 
-const STORAGE_TIMEOUT_MS = 5000;
+// A real (working) AsyncStorage read/write on-device normally takes low
+// single-digit milliseconds, so this has generous margin without being the
+// multi-second stall it was — now that a timeout falls back to a mirror
+// that's actually correct (see memoryMirror below) rather than a lossy
+// guess, there's no upside to waiting any longer than this on a call that's
+// going to hang anyway.
+const STORAGE_TIMEOUT_MS = 400;
 const TIMED_OUT = Symbol("storage-timed-out");
 
 // A simple in-memory mirror of whatever's been read/written through this
