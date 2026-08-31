@@ -314,12 +314,13 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
 .card-icon svg{ width:30px; height:30px; color:var(--gold); stroke:currentColor; fill:none; stroke-width:2.2; }
 .card h3{ font-size:1.15rem; margin-bottom:10px; }
 .card p{ font-size:0.88rem; color:#5c4c3a; line-height:1.6; margin-bottom:20px; }
+.card-link-wrap{ display:block; color:inherit; text-decoration:none; cursor:pointer; }
 .card-link{
   display:inline-flex; align-items:center; gap:8px; font-size:0.78rem; letter-spacing:0.08em;
   text-transform:uppercase; color:var(--tan); font-weight:500;
 }
 .card-link svg{ width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:3; transition:transform .3s var(--ease); }
-.card-link:hover svg{ transform:translateX(4px); }
+.card-link-wrap:hover .card-link svg{ transform:translateX(4px); }
 
 /* ==========================================================================
    Signature Pieces

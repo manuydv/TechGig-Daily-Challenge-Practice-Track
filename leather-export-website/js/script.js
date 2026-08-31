@@ -170,6 +170,26 @@
     });
   });
 
+  /* ---------------- Collection card links → prefill enquiry form ---------------- */
+  const interestSelect = document.getElementById("interest");
+  const messageField = document.getElementById("message");
+  document.querySelectorAll(".card-link-wrap").forEach((link) => {
+    link.addEventListener("click", () => {
+      const category = link.dataset.category;
+      const collection = link.dataset.collection;
+      if (interestSelect) {
+        [...interestSelect.options].forEach((opt) => {
+          if (opt.value === collection || opt.textContent === collection) {
+            interestSelect.value = opt.value;
+          }
+        });
+      }
+      if (messageField && !messageField.value) {
+        messageField.value = `I'd like more information on the ${category} range.`;
+      }
+    });
+  });
+
   /* ---------------- Card 3D tilt ---------------- */
   if (!isTouch && !reduceMotion) {
     document.querySelectorAll("[data-tilt]").forEach((card) => {
