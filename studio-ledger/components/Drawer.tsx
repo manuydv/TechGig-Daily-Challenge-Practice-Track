@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Animated, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
+import { router, usePathname } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDrawer } from "@/lib/drawer-context";
 import { useAuth } from "@/lib/auth-context";
@@ -18,6 +18,7 @@ export default function Drawer() {
   const { open, closeDrawer } = useDrawer();
   const { studio, signOut } = useAuth();
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
   const translateX = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
@@ -47,9 +48,21 @@ export default function Drawer() {
     { label: "Settings", href: "/settings" },
   ];
 
+  // These are the app's top-level sections, switched between via this
+  // drawer rather than drilled into — so navigating between them replaces
+  // the current screen instead of stacking on top of it. Pushing here (the
+  // original bug) left every section's screen with no way back: each one's
+  // header shows the menu button in place of a back arrow (intentional, so
+  // the drawer stays reachable from anywhere), so a push-only stack of them
+  // had no way to return to a previous one short of reopening the drawer
+  // and picking it again — and doing that repeatedly just kept pushing
+  // further, never going back. replace keeps exactly one of these on the
+  // stack at a time.
   const go = (href: string) => {
     closeDrawer();
-    router.push(href as never);
+    if (pathname !== href) {
+      router.replace(href as never);
+    }
   };
 
   return (
@@ -78,11 +91,18 @@ export default function Drawer() {
         </View>
 
         <ScrollView contentContainerStyle={styles.navList}>
-          {navItems.map((item) => (
-            <Pressable key={item.href} style={styles.navItem} onPress={() => go(item.href)}>
-              <Text style={styles.navItemText}>{item.label}</Text>
-            </Pressable>
-          ))}
+          {navItems.map((item) => {
+            const active = pathname === item.href;
+            return (
+              <Pressable
+                key={item.href}
+                style={[styles.navItem, active && styles.navItemActive]}
+                onPress={() => go(item.href)}
+              >
+                <Text style={[styles.navItemText, active && styles.navItemTextActive]}>{item.label}</Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
 
         <Pressable
@@ -131,8 +151,10 @@ const styles = StyleSheet.create({
   shopName: { fontSize: 18, fontWeight: "700", color: colors.text },
   shopType: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
   navList: { paddingVertical: 8 },
-  navItem: { paddingHorizontal: 20, paddingVertical: 14 },
+  navItem: { paddingHorizontal: 20, paddingVertical: 14, marginHorizontal: 8, borderRadius: 10 },
+  navItemActive: { backgroundColor: "#EFECFD" },
   navItemText: { fontSize: 16, fontWeight: "600", color: colors.text },
-  signOut: { borderTopWidth: 1, borderTopColor: colors.border, marginBottom: 12 },
+  navItemTextActive: { color: colors.primary },
+  signOut: { borderTopWidth: 1, borderTopColor: colors.border, marginBottom: 12, marginHorizontal: 0 },
   signOutText: { fontSize: 15, color: colors.danger, fontWeight: "600" },
 });
