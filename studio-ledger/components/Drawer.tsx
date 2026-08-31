@@ -1,5 +1,4 @@
-import { useEffect, useRef } from "react";
-import { Animated, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, usePathname } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDrawer } from "@/lib/drawer-context";
@@ -19,23 +18,6 @@ export default function Drawer() {
   const { studio, signOut } = useAuth();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
-  const translateX = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(translateX, {
-        toValue: open ? 0 : -DRAWER_WIDTH,
-        duration: 220,
-        useNativeDriver: true,
-      }),
-      Animated.timing(overlayOpacity, {
-        toValue: open ? 1 : 0,
-        duration: 220,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [open, translateX, overlayOpacity]);
 
   if (!studio) return null;
   const config = getBusinessTypeConfig(studio.business_type);
@@ -58,94 +40,84 @@ export default function Drawer() {
   // and picking it again — and doing that repeatedly just kept pushing
   // further, never going back. replace keeps exactly one of these on the
   // stack at a time.
-  // TEMPORARY diagnostic logging while chasing a "gets stuck" report —
-  // remove once resolved.
   const go = (href: string) => {
-    console.log("[drawer] go:", href, "from", pathname);
     closeDrawer();
     if (pathname !== href) {
       router.replace(href as never);
-    } else {
-      console.log("[drawer] go: already on", href, "- skipping replace");
     }
   };
 
+  // Rebuilt on React Native's own Modal instead of a hand-rolled
+  // Animated.Value slide animation. The previous version tracked `open`
+  // through Animated.timing and left the panel positioned via a transform
+  // that had to finish animating back off-screen before it stopped
+  // intercepting touches. On-device that animation didn't reliably
+  // complete — confirmed via a screenshot showing the panel still fully
+  // visible, with the underlying screen already switched and its data
+  // already loaded, well after closeDrawer had fired. That's a stuck
+  // half-open drawer sitting on top of the app, indistinguishable from a
+  // freeze. Modal's visible prop shows/hides natively (no in-between
+  // animated state to get stuck in) — trading the slide-in flourish for
+  // something that structurally can't have this class of bug.
   return (
-    <>
-      {open ? (
-        <Animated.View
-          pointerEvents={open ? "auto" : "none"}
-          style={[styles.overlay, { opacity: overlayOpacity }]}
-        >
-          <Pressable style={StyleSheet.absoluteFill} onPress={closeDrawer} />
-        </Animated.View>
-      ) : null}
+    <Modal visible={open} transparent animationType="fade" onRequestClose={closeDrawer}>
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={closeDrawer} />
 
-      <Animated.View
-        pointerEvents={open ? "auto" : "none"}
-        style={[
-          styles.panel,
-          { width: DRAWER_WIDTH, paddingTop: insets.top + 16, transform: [{ translateX }] },
-        ]}
-      >
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <Text style={styles.shopName} numberOfLines={2}>
-              {studio.name}
-            </Text>
-            <Pressable onPress={closeDrawer} hitSlop={12} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.shopType}>{config.label}</Text>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.navList}>
-          {navItems.map((item) => {
-            const active = pathname === item.href;
-            return (
-              <Pressable
-                key={item.href}
-                style={[styles.navItem, active && styles.navItemActive]}
-                onPress={() => go(item.href)}
-              >
-                <Text style={[styles.navItemText, active && styles.navItemTextActive]}>{item.label}</Text>
+        <View style={[styles.panel, { width: DRAWER_WIDTH, paddingTop: insets.top + 16 }]}>
+          <View style={styles.header}>
+            <View style={styles.headerRow}>
+              <Text style={styles.shopName} numberOfLines={2}>
+                {studio.name}
+              </Text>
+              <Pressable onPress={closeDrawer} hitSlop={12} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>✕</Text>
               </Pressable>
-            );
-          })}
-        </ScrollView>
+            </View>
+            <Text style={styles.shopType}>{config.label}</Text>
+          </View>
 
-        <Pressable
-          style={[styles.navItem, styles.signOut]}
-          onPress={() => {
-            closeDrawer();
-            signOut();
-          }}
-        >
-          <Text style={styles.signOutText}>Sign out</Text>
-        </Pressable>
-      </Animated.View>
-    </>
+          <ScrollView contentContainerStyle={styles.navList}>
+            {navItems.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Pressable
+                  key={item.href}
+                  style={[styles.navItem, active && styles.navItemActive]}
+                  onPress={() => go(item.href)}
+                >
+                  <Text style={[styles.navItemText, active && styles.navItemTextActive]}>
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          <Pressable
+            style={[styles.navItem, styles.signOut]}
+            onPress={() => {
+              closeDrawer();
+              signOut();
+            }}
+          >
+            <Text style={styles.signOutText}>Sign out</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
+    flexDirection: "row",
     backgroundColor: "rgba(0,0,0,0.35)",
-    zIndex: 10,
   },
   panel: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    bottom: 0,
+    height: "100%",
     backgroundColor: colors.card,
-    zIndex: 20,
     shadowColor: "#000",
     shadowOpacity: 0.15,
     shadowOffset: { width: 2, height: 0 },
