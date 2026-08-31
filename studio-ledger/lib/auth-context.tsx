@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { supabase, SUPABASE_AUTH_STORAGE_KEY } from "@/lib/supabase";
 import type { StaffUser, Studio } from "@/types/database";
 
 interface AuthContextValue {
@@ -60,20 +61,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [loadStudio]
   );
 
+  // Clears the locally stored session directly, bypassing supabase-js's own
+  // auth methods. Every one of those (signOut, signIn, getSession, ...)
+  // serializes through a single internal lock; if one call to it never
+  // resolves (e.g. a background token refresh stalls on a bad network), the
+  // lock stays "held" forever and every later auth call queues up behind it
+  // indefinitely, with no error — confirmed on-device (signOut logged that
+  // it was called, then never logged a result). Writing straight to
+  // AsyncStorage and resetting local state sidesteps that lock entirely.
+  const clearLocalSession = useCallback(async () => {
+    try {
+      await AsyncStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
+    } catch (err) {
+      console.log("[auth-context] clearLocalSession: storage clear threw", err);
+    }
+    setSession(null);
+    setStaffUser(null);
+    setStudio(null);
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     let settled = false;
 
     // supabase-js's getSession() can refresh a stale token over the network
-    // with no built-in timeout, so a flaky connection can otherwise leave
-    // the app stuck on the loading screen forever. This safety net gives up
-    // on the initial load after a few seconds and falls back to "signed
-    // out" (the login screen) rather than hanging indefinitely; if the real
-    // session does resolve afterwards, onAuthStateChange still picks it up.
+    // with no built-in timeout, so a flaky connection (or the internal lock
+    // issue described on clearLocalSession above) can otherwise leave the
+    // app stuck on the loading screen forever. This safety net gives up on
+    // the initial load after a few seconds. It also proactively clears
+    // whatever session is stored — if that stored session is what's causing
+    // the hang, leaving it in place would just cause the exact same hang on
+    // every future app launch.
     const safetyTimer = setTimeout(() => {
       if (mounted && !settled) {
         settled = true;
-        setLoading(false);
+        console.log("[auth-context] initial session check timed out; clearing local session");
+        clearLocalSession().finally(() => {
+          if (mounted) setLoading(false);
+        });
       }
     }, 8000);
 
@@ -104,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(safetyTimer);
       subscription.subscription.unsubscribe();
     };
-  }, [loadStaffUser]);
+  }, [loadStaffUser, clearLocalSession]);
 
   const refreshStaffUser = useCallback(async () => {
     await loadStaffUser(session?.user.id);
@@ -130,16 +155,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    // TEMPORARY diagnostic logging while chasing a stuck-request report —
-    // remove once resolved. Watch the Metro terminal when tapping sign out.
     console.log("[auth-context] signOut: called");
-    try {
-      const { error } = await supabase.auth.signOut();
-      console.log("[auth-context] signOut: settled, error =", error?.message ?? null);
-    } catch (err) {
-      console.log("[auth-context] signOut: threw", err);
-    }
-  }, []);
+    // See clearLocalSession's comment: supabase.auth.signOut() itself can
+    // hang forever if the client's internal lock is stuck, so it's not
+    // called (or awaited) on the critical path anymore. Best-effort fire it
+    // in the background in case the lock isn't actually stuck this time, so
+    // the refresh token gets revoked server-side — but nothing waits on it.
+    supabase.auth.signOut().catch(() => {});
+    await clearLocalSession();
+    console.log("[auth-context] signOut: local state cleared");
+  }, [clearLocalSession]);
 
   const value = useMemo(
     () => ({

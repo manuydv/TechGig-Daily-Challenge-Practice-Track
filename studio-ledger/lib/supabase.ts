@@ -52,3 +52,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     fetch: fetchWithTimeout,
   },
 });
+
+// The AsyncStorage key supabase-js stores the session under (it derives this
+// itself internally; duplicated here so auth-context can clear it directly
+// as a last-resort recovery path — see the comment on signOut there).
+const projectRef = new URL(supabaseUrl).hostname.split(".")[0];
+export const SUPABASE_AUTH_STORAGE_KEY = `sb-${projectRef}-auth-token`;
