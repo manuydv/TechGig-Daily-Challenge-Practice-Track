@@ -258,6 +258,20 @@
     }, colIndex * 1600);
   });
 
+  /* ---------------- Our Range category photo cards (staggered crossfade) ---------------- */
+  document.querySelectorAll(".card-photo").forEach((photo, i) => {
+    const slides = photo.querySelectorAll(".card-photo-slide");
+    if (slides.length < 2 || reduceMotion) return;
+    let current = 0;
+    setTimeout(() => {
+      setInterval(() => {
+        slides[current].classList.remove("is-active");
+        current = (current + 1) % slides.length;
+        slides[current].classList.add("is-active");
+      }, 3400);
+    }, i * 500);
+  });
+
   /* ---------------- Contact form (client-side demo submit) ---------------- */
   const form = document.getElementById("contactForm");
   const formNote = document.getElementById("formNote");
