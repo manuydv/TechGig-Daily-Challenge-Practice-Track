@@ -58,49 +58,43 @@ const STORAGE_TIMEOUT_MS = 5000;
 // fetch: getItem falls back to null (treated as "no stored session") and
 // set/removeItem just give up quietly, rather than leaving the caller
 // pending forever.
+function raceStorage<T>(real: Promise<T>, fallback: T, label: string): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<T>((resolve) => {
+    timeoutId = setTimeout(() => {
+      console.log(`[storage] ${label} TIMED OUT, falling back:`, fallback);
+      resolve(fallback);
+    }, STORAGE_TIMEOUT_MS);
+  });
+  // Clearing the timer once either side settles matters more here than it
+  // did for fetch: this storage wrapper gets called repeatedly by
+  // supabase-js's background auto-refresh timer, so leaving a stray 5s
+  // timer running on every call (even ones that resolved instantly) piles
+  // up over time and can bog down the JS thread on its own.
+  return Promise.race([real, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
 const timeoutSafeStorage = {
-  getItem: (key: string) => {
-    console.log("[storage] getItem:", key);
-    return Promise.race([
-      AsyncStorage.getItem(key),
-      new Promise<string | null>((resolve) =>
-        setTimeout(() => {
-          console.log("[storage] getItem TIMED OUT, falling back to null:", key);
-          resolve(null);
-        }, STORAGE_TIMEOUT_MS)
-      ),
-    ]);
-  },
-  setItem: (key: string, value: string) => {
-    console.log("[storage] setItem:", key);
-    return Promise.race([
-      AsyncStorage.setItem(key, value),
-      new Promise<void>((resolve) =>
-        setTimeout(() => {
-          console.log("[storage] setItem TIMED OUT, giving up:", key);
-          resolve();
-        }, STORAGE_TIMEOUT_MS)
-      ),
-    ]);
-  },
-  removeItem: (key: string) => {
-    console.log("[storage] removeItem:", key);
-    return Promise.race([
-      AsyncStorage.removeItem(key),
-      new Promise<void>((resolve) =>
-        setTimeout(() => {
-          console.log("[storage] removeItem TIMED OUT, giving up:", key);
-          resolve();
-        }, STORAGE_TIMEOUT_MS)
-      ),
-    ]);
-  },
+  getItem: (key: string) => raceStorage(AsyncStorage.getItem(key), null, `getItem(${key})`),
+  setItem: (key: string, value: string) => raceStorage(AsyncStorage.setItem(key, value), undefined, `setItem(${key})`),
+  removeItem: (key: string) => raceStorage(AsyncStorage.removeItem(key), undefined, `removeItem(${key})`),
 };
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: timeoutSafeStorage,
-    autoRefreshToken: true,
+    // Off, not the default true. This runs on a background timer (roughly
+    // every few seconds) that reads storage every tick to check whether the
+    // token needs refreshing. On-device logs showed *every* storage read
+    // timing out on this device, and with the timer re-triggering one
+    // before the last had even given up, that piled up an ever-growing
+    // stack of pending 5s timers — which was almost certainly why taps
+    // (like the drawer's close button) started feeling unresponsive: not a
+    // touch-handling bug, just the JS thread bogged down by all of it.
+    // We don't lose correctness by turning it off — every request already
+    // checks/refreshes the token on demand via _getAccessToken when it's
+    // actually used, this only removes the redundant proactive polling.
+    autoRefreshToken: false,
     persistSession: true,
     detectSessionInUrl: false,
   },
