@@ -389,7 +389,7 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
 /* ==========================================================================
    Testimonials
    ========================================================================== */
-.testimonials{ padding:120px 0 140px; background:var(--paper); }
+.testimonials{ padding:120px 0 140px; background:#f1e8d6; border-top:1px solid var(--line-light); }
 .slider{ max-width:720px; margin:0 auto; text-align:center; }
 .slider-track{ position:relative; min-height:190px; }
 .slide{
