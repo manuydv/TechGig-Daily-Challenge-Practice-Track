@@ -13,17 +13,22 @@ import { router, useFocusEffect } from "expo-router";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import SegmentedControl from "@/components/SegmentedControl";
-import { currentMonth } from "@/lib/dates";
+import { currentMonth, daysSince } from "@/lib/dates";
 import { colors } from "@/lib/theme";
+import { getBusinessTypeConfig } from "@/lib/businessTypes";
 import type { Member, MemberStatus, Gender } from "@/types/database";
 
 type StatusFilter = MemberStatus | "all";
 type GenderFilter = Gender | "all";
 
 export default function MemberListScreen() {
-  const { staffUser, signOut } = useAuth();
+  const { staffUser, studio, signOut } = useAuth();
+  const config = getBusinessTypeConfig(studio?.business_type ?? "yoga_studio");
+  const reminderDays = studio?.reminder_days ?? 30;
+
   const [members, setMembers] = useState<Member[]>([]);
   const [paidMemberIds, setPaidMemberIds] = useState<Set<string>>(new Set());
+  const [lastVisitByMember, setLastVisitByMember] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
@@ -33,25 +38,39 @@ export default function MemberListScreen() {
   const load = useCallback(async () => {
     if (!staffUser) return;
     setError(null);
-    const [membersRes, paymentsRes] = await Promise.all([
-      supabase.from("members").select("*").order("name", { ascending: true }),
-      supabase
-        .from("payments")
-        .select("member_id")
-        .eq("month", currentMonth())
-        .eq("paid", true),
-    ]);
+    const membersRes = await supabase.from("members").select("*").order("name", { ascending: true });
 
     if (membersRes.error) {
       setError(membersRes.error.message);
     } else {
       setMembers(membersRes.data ?? []);
     }
-    if (!paymentsRes.error) {
-      setPaidMemberIds(new Set((paymentsRes.data ?? []).map((p) => p.member_id)));
+
+    if (config.mode === "membership") {
+      const paymentsRes = await supabase
+        .from("payments")
+        .select("member_id")
+        .eq("month", currentMonth())
+        .eq("paid", true);
+      if (!paymentsRes.error) {
+        setPaidMemberIds(new Set((paymentsRes.data ?? []).map((p) => p.member_id)));
+      }
+    } else {
+      const visitsRes = await supabase
+        .from("visits")
+        .select("member_id, visited_on")
+        .order("visited_on", { ascending: false });
+      if (!visitsRes.error) {
+        const latest: Record<string, string> = {};
+        for (const visit of visitsRes.data ?? []) {
+          if (!latest[visit.member_id]) latest[visit.member_id] = visit.visited_on;
+        }
+        setLastVisitByMember(latest);
+      }
     }
+
     setLoading(false);
-  }, [staffUser]);
+  }, [staffUser, config.mode]);
 
   useFocusEffect(
     useCallback(() => {
@@ -63,33 +82,35 @@ export default function MemberListScreen() {
     const term = search.trim().toLowerCase();
     return members.filter((m) => {
       if (term && !m.name.toLowerCase().includes(term)) return false;
-      if (statusFilter !== "all" && m.status !== statusFilter) return false;
+      if (config.mode === "membership" && statusFilter !== "all" && m.status !== statusFilter) return false;
       if (genderFilter !== "all" && m.gender !== genderFilter) return false;
       return true;
     });
-  }, [members, search, statusFilter, genderFilter]);
+  }, [members, search, statusFilter, genderFilter, config.mode]);
 
   return (
     <View style={styles.flex}>
       <View style={styles.toolbar}>
         <TextInput
           style={styles.search}
-          placeholder="Search members"
+          placeholder={`Search ${config.personLabelPlural.toLowerCase()}`}
           placeholderTextColor={colors.textMuted}
           value={search}
           onChangeText={setSearch}
         />
-        <SegmentedControl
-          label="Status"
-          value={statusFilter}
-          onChange={setStatusFilter}
-          options={[
-            { label: "All", value: "all" },
-            { label: "Active", value: "active" },
-            { label: "Paused", value: "paused" },
-            { label: "Inactive", value: "inactive" },
-          ]}
-        />
+        {config.mode === "membership" ? (
+          <SegmentedControl
+            label="Status"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { label: "All", value: "all" },
+              { label: "Active", value: "active" },
+              { label: "Paused", value: "paused" },
+              { label: "Inactive", value: "inactive" },
+            ]}
+          />
+        ) : null}
         <SegmentedControl
           label="Gender"
           value={genderFilter}
@@ -111,9 +132,35 @@ export default function MemberListScreen() {
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
         ListEmptyComponent={
-          !loading ? <Text style={styles.empty}>No members yet. Add your first one.</Text> : null
+          !loading ? (
+            <Text style={styles.empty}>
+              No {config.personLabelPlural.toLowerCase()} yet. Add your first one.
+            </Text>
+          ) : null
         }
         renderItem={({ item }) => {
+          if (config.mode === "visit") {
+            const lastVisit = lastVisitByMember[item.id];
+            const since = lastVisit ? daysSince(lastVisit) : null;
+            const isDue = since !== null && since >= reminderDays;
+            const badgeLabel = lastVisit ? (isDue ? "Due" : `${since}d ago`) : "New";
+            return (
+              <Pressable style={styles.row} onPress={() => router.push(`/member/${item.id}`)}>
+                <View style={styles.rowMain}>
+                  <Text style={styles.rowName}>{item.name}</Text>
+                  <Text style={styles.rowMeta}>{item.phone ?? "No phone on file"}</Text>
+                </View>
+                <View style={[styles.badge, isDue || !lastVisit ? styles.badgeUnpaid : styles.badgePaid]}>
+                  <Text
+                    style={[styles.badgeText, isDue || !lastVisit ? styles.badgeTextUnpaid : styles.badgeTextPaid]}
+                  >
+                    {badgeLabel}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          }
+
           const paid = paidMemberIds.has(item.id);
           return (
             <Pressable style={styles.row} onPress={() => router.push(`/member/${item.id}`)}>
@@ -137,9 +184,14 @@ export default function MemberListScreen() {
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.signOut} onPress={signOut}>
-        <Text style={styles.signOutText}>Sign out</Text>
-      </TouchableOpacity>
+      <View style={styles.footerLinks}>
+        <TouchableOpacity onPress={() => router.push("/settings")}>
+          <Text style={styles.footerLinkText}>Settings</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={signOut}>
+          <Text style={styles.footerLinkText}>Sign out</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -217,12 +269,14 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   fabText: { color: colors.primaryText, fontSize: 28, lineHeight: 30 },
-  signOut: {
+  footerLinks: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 20,
-    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 20,
   },
-  signOutText: { color: colors.textMuted, fontSize: 13 },
+  footerLinkText: { color: colors.textMuted, fontSize: 13 },
 });

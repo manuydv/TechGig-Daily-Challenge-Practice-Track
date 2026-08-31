@@ -7,6 +7,7 @@ import MemberForm, { MemberFormValues, validateMemberForm } from "@/components/M
 import Button from "@/components/Button";
 import { today } from "@/lib/dates";
 import { colors } from "@/lib/theme";
+import { getBusinessTypeConfig } from "@/lib/businessTypes";
 
 const initialValues: MemberFormValues = {
   name: "",
@@ -19,7 +20,8 @@ const initialValues: MemberFormValues = {
 };
 
 export default function NewMemberScreen() {
-  const { staffUser } = useAuth();
+  const { staffUser, studio } = useAuth();
+  const config = getBusinessTypeConfig(studio?.business_type ?? "yoga_studio");
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<ReturnType<typeof validateMemberForm>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -30,7 +32,7 @@ export default function NewMemberScreen() {
   };
 
   const handleSave = async () => {
-    const validationErrors = validateMemberForm(values);
+    const validationErrors = validateMemberForm(values, config.mode);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
     if (!staffUser) return;
@@ -44,8 +46,8 @@ export default function NewMemberScreen() {
       phone: values.phone.trim() || null,
       email: values.email.trim() || null,
       joined_on: values.joinedOn,
-      monthly_fee: Number(values.monthlyFee),
-      status: values.status,
+      monthly_fee: config.mode === "membership" ? Number(values.monthlyFee) : 0,
+      status: config.mode === "membership" ? values.status : "active",
     });
     setSaving(false);
 
@@ -59,9 +61,9 @@ export default function NewMemberScreen() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <MemberForm values={values} errors={errors} onChange={handleChange} />
+        <MemberForm values={values} errors={errors} mode={config.mode} onChange={handleChange} />
         {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
-        <Button title="Add member" onPress={handleSave} loading={saving} />
+        <Button title={`Add ${config.personLabelSingular.toLowerCase()}`} onPress={handleSave} loading={saving} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

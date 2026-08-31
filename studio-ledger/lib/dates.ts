@@ -56,3 +56,17 @@ export function recentMonths(count: number): string[] {
   }
   return months;
 }
+
+/** Whole days between `dateStr` (YYYY-MM-DD) and today, in local time. */
+export function daysSince(dateStr: string): number {
+  const then = new Date(dateStr + "T00:00:00");
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffMs = startOfToday.getTime() - then.getTime();
+  return Math.round(diffMs / (1000 * 60 * 60 * 24));
+}
+
+export function formatDate(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}

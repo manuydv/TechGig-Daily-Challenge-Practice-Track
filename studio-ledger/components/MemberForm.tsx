@@ -2,6 +2,7 @@ import { View } from "react-native";
 import TextField from "@/components/TextField";
 import SegmentedControl from "@/components/SegmentedControl";
 import { isValidDate } from "@/lib/dates";
+import type { TrackingMode } from "@/lib/businessTypes";
 import type { Gender, MemberStatus } from "@/types/database";
 
 export interface MemberFormValues {
@@ -20,13 +21,15 @@ export interface MemberFormErrors {
   monthlyFee?: string;
 }
 
-export function validateMemberForm(values: MemberFormValues): MemberFormErrors {
+export function validateMemberForm(values: MemberFormValues, mode: TrackingMode): MemberFormErrors {
   const errors: MemberFormErrors = {};
   if (!values.name.trim()) errors.name = "Name is required.";
   if (!isValidDate(values.joinedOn)) errors.joinedOn = "Use the format YYYY-MM-DD.";
-  const fee = Number(values.monthlyFee);
-  if (values.monthlyFee.trim() === "" || Number.isNaN(fee) || fee < 0) {
-    errors.monthlyFee = "Enter a monthly fee of 0 or more.";
+  if (mode === "membership") {
+    const fee = Number(values.monthlyFee);
+    if (values.monthlyFee.trim() === "" || Number.isNaN(fee) || fee < 0) {
+      errors.monthlyFee = "Enter a monthly fee of 0 or more.";
+    }
   }
   return errors;
 }
@@ -34,10 +37,11 @@ export function validateMemberForm(values: MemberFormValues): MemberFormErrors {
 interface Props {
   values: MemberFormValues;
   errors: MemberFormErrors;
+  mode: TrackingMode;
   onChange: <K extends keyof MemberFormValues>(key: K, value: MemberFormValues[K]) => void;
 }
 
-export default function MemberForm({ values, errors, onChange }: Props) {
+export default function MemberForm({ values, errors, mode, onChange }: Props) {
   return (
     <View>
       <TextField
@@ -85,25 +89,29 @@ export default function MemberForm({ values, errors, onChange }: Props) {
         error={errors.joinedOn}
       />
 
-      <TextField
-        label="Monthly fee"
-        value={values.monthlyFee}
-        onChangeText={(text) => onChange("monthlyFee", text)}
-        placeholder="e.g. 2000"
-        keyboardType="decimal-pad"
-        error={errors.monthlyFee}
-      />
+      {mode === "membership" ? (
+        <>
+          <TextField
+            label="Monthly fee"
+            value={values.monthlyFee}
+            onChangeText={(text) => onChange("monthlyFee", text)}
+            placeholder="e.g. 2000"
+            keyboardType="decimal-pad"
+            error={errors.monthlyFee}
+          />
 
-      <SegmentedControl
-        label="Status"
-        value={values.status}
-        onChange={(value) => onChange("status", value)}
-        options={[
-          { label: "Active", value: "active" },
-          { label: "Paused", value: "paused" },
-          { label: "Inactive", value: "inactive" },
-        ]}
-      />
+          <SegmentedControl
+            label="Status"
+            value={values.status}
+            onChange={(value) => onChange("status", value)}
+            options={[
+              { label: "Active", value: "active" },
+              { label: "Paused", value: "paused" },
+              { label: "Inactive", value: "inactive" },
+            ]}
+          />
+        </>
+      ) : null}
     </View>
   );
 }

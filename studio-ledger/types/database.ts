@@ -1,6 +1,7 @@
 export type Gender = "male" | "female" | "other";
 export type MemberStatus = "active" | "paused" | "inactive";
 export type StaffRole = "owner" | "staff";
+export type BusinessType = "yoga_studio" | "gym" | "barbershop" | "salon" | "other";
 
 export interface Studio {
   id: string;
@@ -9,6 +10,11 @@ export interface Studio {
   currency: string;
   timezone: string;
   subscription_status: string;
+  business_type: BusinessType;
+  reminder_days: number;
+  reminder_message: string | null;
+  public_intake_enabled: boolean;
+  public_intake_slug: string | null;
   created_at: string;
 }
 
@@ -45,6 +51,17 @@ export interface Payment {
   created_at: string;
 }
 
+export interface Visit {
+  id: string;
+  studio_id: string;
+  member_id: string;
+  visited_on: string; // YYYY-MM-DD
+  service: string | null;
+  amount: number | null;
+  notes: string | null;
+  created_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -72,12 +89,31 @@ export type Database = {
         Update: Partial<Payment>;
         Relationships: [];
       };
+      visits: {
+        Row: Visit;
+        Insert: Partial<Visit> & { member_id: string };
+        Update: Partial<Visit>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {
       create_studio: {
-        Args: { studio_name: string };
+        Args: { studio_name: string; business_type?: BusinessType };
         Returns: Studio;
+      };
+      get_intake_studio: {
+        Args: { intake_slug: string };
+        Returns: { name: string; business_type: BusinessType }[];
+      };
+      public_intake_add_client: {
+        Args: {
+          intake_slug: string;
+          client_name: string;
+          client_phone?: string | null;
+          client_email?: string | null;
+        };
+        Returns: Member;
       };
     };
     Enums: {};
