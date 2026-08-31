@@ -84,9 +84,14 @@ export default function Drawer() {
         ]}
       >
         <View style={styles.header}>
-          <Text style={styles.shopName} numberOfLines={2}>
-            {studio.name}
-          </Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.shopName} numberOfLines={2}>
+              {studio.name}
+            </Text>
+            <Pressable onPress={closeDrawer} hitSlop={12} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </Pressable>
+          </View>
           <Text style={styles.shopType}>{config.label}</Text>
         </View>
 
@@ -148,8 +153,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  shopName: { fontSize: 18, fontWeight: "700", color: colors.text },
+  headerRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
+  shopName: { flex: 1, fontSize: 18, fontWeight: "700", color: colors.text, marginRight: 12 },
   shopType: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
+  closeButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.background,
+  },
+  closeButtonText: { fontSize: 14, color: colors.textMuted, fontWeight: "600" },
   navList: { paddingVertical: 8 },
   navItem: { paddingHorizontal: 20, paddingVertical: 14, marginHorizontal: 8, borderRadius: 10 },
   navItemActive: { backgroundColor: "#EFECFD" },
