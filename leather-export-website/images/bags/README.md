@@ -10,17 +10,12 @@ instead of the line-art icon.
 - `crossbody/` — Crossbody
 - `shoulder-bag/` — Shoulder Bag
 - `bucket-bag/` — Bucket Bag
-- `top-handle/` — Top-Handle Handbag
 - `clutch/` — Clutch
-- `weekender/` — Weekender
 
 ## Men's Collection — `mens/`
 - `backpack/` — Backpack
 - `messenger-bag/` — Messenger Bag
 - `crossbody-sling/` — Crossbody / Sling
-- `briefcase/` — Briefcase
-- `duffel-travel/` — Duffel / Travel
-- `satchel/` — Satchel
 - `tote/` — Tote
 - `wallets-slg/` — Wallets & SLG
 
