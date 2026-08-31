@@ -168,6 +168,14 @@ with Expo Go on a physical device.
 - **Phase 4 — Billing**: Razorpay/Stripe subscriptions, trial period, paywall.
 - **Phase 5 — Polish and store submission**: app icons, onboarding screens,
   push notification permissions, iOS App Store + Google Play submission.
+  - **App name & trademark**: pick a final app name cleared for trademark
+    conflicts before it's locked into store listings and legal documents.
+  - **Privacy Policy**: required by both the App Store and Google Play
+    before submission — must disclose what data is collected (member/client
+    names, phone, email, payment/visit history) and how it's stored
+    (Supabase) and used.
+  - **Terms of Use**: sets the rules for using the app and limits liability;
+    also required for store submission.
 
 A marketing website (with its own social preview image, subdomain, and
 sitemap.xml) is intentionally not on this roadmap yet — the app is
