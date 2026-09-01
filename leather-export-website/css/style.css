@@ -280,6 +280,7 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
    Collections
    ========================================================================== */
 .collections{ padding:140px 0 120px; background:#f1e8d6; border-top:1px solid var(--line-light); }
+.collections--jackets{ background:var(--paper); }
 .section-head{ max-width:640px; margin-bottom:56px; }
 .section-head-light{ color:var(--cream); }
 .section-head-light .eyebrow{ color:var(--gold); }
