@@ -233,10 +233,19 @@
   // backdrop, instead of a flat gray — the box's aspect ratio doesn't always
   // match the photo's, so any mismatch would otherwise show as a visible
   // border around the (never-cropped) product photo.
+  // Also shape each box to its own photo's exact aspect ratio — the fixed
+  // 4:5 box otherwise leaves a left/right gap for any photo that isn't
+  // exactly that ratio (all of these product shots are closer to 2:3), no
+  // matter how well the background color is matched.
   document.querySelectorAll(".piece-photo").forEach((box) => {
     const img = box.querySelector("img");
     if (!img) return;
-    const apply = () => { box.style.backgroundColor = getImageBgColor(img); };
+    const apply = () => {
+      box.style.backgroundColor = getImageBgColor(img);
+      if (img.naturalWidth && img.naturalHeight) {
+        box.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
+      }
+    };
     if (img.complete && img.naturalWidth) apply();
     else img.addEventListener("load", apply, { once: true });
   });
