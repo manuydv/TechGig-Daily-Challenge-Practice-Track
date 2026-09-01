@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ZOVARO — interactions
+   ZOVARO: interactions
    ========================================================================== */
 (() => {
   "use strict";
@@ -194,7 +194,7 @@
       canvas.width = 1;
       canvas.height = 1;
       const ctx = canvas.getContext("2d");
-      // sample a corner pixel — a couple px in to avoid any edge/compression noise
+      // sample a corner pixel, a couple px in to avoid any edge/compression noise
       ctx.drawImage(imgEl, 2, 2, 1, 1, 0, 0, 1, 1);
       const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
       return `rgb(${r}, ${g}, ${b})`;
@@ -208,10 +208,10 @@
   }
 
   // Match each Signature Piece photo box's background to its own image's
-  // backdrop, instead of a flat gray — the box's aspect ratio doesn't always
+  // backdrop, instead of a flat gray. The box's aspect ratio doesn't always
   // match the photo's, so any mismatch would otherwise show as a visible
   // border around the (never-cropped) product photo.
-  // Also shape each box to its own photo's exact aspect ratio — the fixed
+  // Also shape each box to its own photo's exact aspect ratio. The fixed
   // 4:5 box otherwise leaves a left/right gap for any photo that isn't
   // exactly that ratio (all of these product shots are closer to 2:3), no
   // matter how well the background color is matched.
@@ -302,7 +302,7 @@
       const collection = card.dataset.collection || "Women's Collection";
       openLightbox({
         images: [{ src: img.src, alt: img.alt }],
-        eyebrow: `Signature Piece — ${tag}`,
+        eyebrow: `Signature Piece: ${tag}`,
         title, desc, meta, price,
         ctaText: "Enquire About This Piece",
         onCta: () => {
@@ -340,7 +340,7 @@
         });
         return;
       }
-      // no photos yet for this category — fall back to jumping straight to the enquiry form
+      // no photos yet for this category, fall back to jumping straight to the enquiry form
       prefillEnquiry(collection, `I'd like more information on the ${category} range.`);
     });
   });
@@ -444,7 +444,7 @@
   const formNote = document.getElementById("formNote");
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    formNote.textContent = "Thank you — your enquiry has been noted. Our export desk will reply within one business day.";
+    formNote.textContent = "Thank you, your enquiry has been noted. Our export desk will reply within one business day.";
     formNote.style.color = "var(--tan)";
     form.reset();
   });

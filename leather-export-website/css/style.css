@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ZOVARO — Leather Export House
+   ZOVARO: Leather Export House
    Design tokens
    ========================================================================== */
 :root{
@@ -281,12 +281,17 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
    ========================================================================== */
 .collections{ padding:140px 0 120px; background:#f1e8d6; border-top:1px solid var(--line-light); }
 .collections--jackets{ background:var(--paper); }
-.two-up-grid{ grid-template-columns:repeat(2, 1fr); max-width:760px; }
 .section-head{ max-width:640px; margin-bottom:56px; }
 .section-head-light{ color:var(--cream); }
 .section-head-light .eyebrow{ color:var(--gold); }
 
 .cards-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:22px; }
+/* Must come after .cards-grid. Equal specificity, later wins, so a
+   two-item grid (bags/jackets) actually gets 2 wide columns instead of
+   the 4-column base leaving two tracks empty on the right. The mobile
+   media queries further down still collapse this to 1 column, since
+   they come later still. */
+.two-up-grid{ grid-template-columns:repeat(2, 1fr); }
 .card{
   position:relative; background:var(--cream); border-radius:18px; padding:34px 26px;
   transition:transform .12s linear, box-shadow .4s var(--ease);
