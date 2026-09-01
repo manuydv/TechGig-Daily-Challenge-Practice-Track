@@ -207,13 +207,13 @@
   }
 
   // Match each Signature Piece photo box's background to its own image's
-  // backdrop, instead of a flat gray. The box's aspect ratio doesn't always
-  // match the photo's, so any mismatch would otherwise show as a visible
-  // border around the (never-cropped) product photo.
-  // Also shape each box to its own photo's exact aspect ratio. The fixed
-  // 4:5 box otherwise leaves a left/right gap for any photo that isn't
-  // exactly that ratio (all of these product shots are closer to 2:3), no
-  // matter how well the background color is matched.
+  // backdrop, instead of a flat gray. Every card in a row shares one box
+  // size (CSS subgrid + width/height:100%, so titles line up even though
+  // photos have different natural proportions), which can letterbox a
+  // photo that's not the tallest/widest in its row; the matched background
+  // hides that letterbox instead of showing a mismatched border.
+  // The aspect-ratio hint below feeds the shared row's auto-height sizing
+  // (so the row grows to fit its tallest photo) without ever cropping.
   document.querySelectorAll(".piece-photo").forEach((box) => {
     const img = box.querySelector("img");
     if (!img) return;
