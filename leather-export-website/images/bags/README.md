@@ -1,23 +1,16 @@
 # Bag photo folders
 
-Drop product photos into the matching category folder below. When you're
-ready, tell Claude and the HTML/CSS will be updated to display them —
-each category card in the "Our Range" section will show your real photos
-instead of the line-art icon.
+Bags are split by gender only, no categories — drop photos straight into
+the matching folder below. When you're ready, tell Claude and the HTML
+will be updated to show your real photos in the "Our Range" section
+instead of the line-art icon (exactly like the jacket folders).
 
-## Women's Collection — `womens/`
-- `tote-shopper/` — Tote & Shopper
-- `crossbody/` — Crossbody
-- `shoulder-bag/` — Shoulder Bag
-- `bucket-bag/` — Bucket Bag
-- `clutch/` — Clutch
+## Women's Bags — `womens/`
+Any leather bag photos for women — totes, shoulder bags, buckets,
+clutches, etc. — go straight in this one folder.
 
-## Men's Collection — `mens/`
-- `backpack/` — Backpack
-- `messenger-bag/` — Messenger Bag
-- `crossbody-sling/` — Crossbody / Sling
-- `tote/` — Tote
-- `wallets-slg/` — Wallets & SLG
+## Men's Bags — `mens/`
+Any leather bag photos for men go straight in this one folder.
 
 ## Tips for consistent results
 - Any file name is fine (e.g. `bag1.jpg`, `product-01.png`) — just say
@@ -25,4 +18,4 @@ instead of the line-art icon.
 - Studio shots on a plain light-grey background (like the ones already
   used in "Signature Pieces") blend into the site cleanly with no extra
   editing needed.
-- A few photos per category is enough to start; more can be added later.
+- A few photos is enough to start; more can be added later.

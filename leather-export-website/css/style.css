@@ -281,22 +281,10 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
    ========================================================================== */
 .collections{ padding:140px 0 120px; background:#f1e8d6; border-top:1px solid var(--line-light); }
 .collections--jackets{ background:var(--paper); }
-.jackets-grid{ grid-template-columns:repeat(2, 1fr); max-width:760px; }
+.two-up-grid{ grid-template-columns:repeat(2, 1fr); max-width:760px; }
 .section-head{ max-width:640px; margin-bottom:56px; }
 .section-head-light{ color:var(--cream); }
 .section-head-light .eyebrow{ color:var(--gold); }
-
-.tabs{ display:inline-flex; gap:6px; padding:6px; background:#efe6d5; border:1px solid var(--line-light); border-radius:999px; margin-bottom:48px; }
-.tab{
-  border:none; background:none; padding:12px 26px; border-radius:999px; cursor:pointer;
-  font-size:0.82rem; letter-spacing:0.06em; text-transform:uppercase; color:#6b5a45;
-  transition:background .35s var(--ease), color .35s;
-}
-.tab.is-active{ background:var(--ink); color:var(--gold); }
-
-.tab-panel{ display:none; }
-.tab-panel.is-active{ display:block; animation:panelIn .5s var(--ease); }
-@keyframes panelIn{ from{ opacity:0; transform:translateY(14px);} to{ opacity:1; transform:translateY(0);} }
 
 .cards-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:22px; }
 .card{

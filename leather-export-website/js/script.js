@@ -152,28 +152,6 @@
   );
   stats.forEach((el) => statsIo.observe(el));
 
-  /* ---------------- Collection tabs ---------------- */
-  // Scoped to the nearest <section> so multiple independent tab groups on
-  // the page (bags, jackets, …) don't hide each other's panels — switching
-  // tabs in one section must never touch another section's tabs/panels.
-  document.querySelectorAll(".tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const scope = tab.closest("section") || document;
-      const scopedTabs = scope.querySelectorAll(".tab");
-      const scopedPanels = scope.querySelectorAll(".tab-panel");
-      scopedTabs.forEach((t) => t.classList.remove("is-active"));
-      scopedPanels.forEach((p) => p.classList.remove("is-active"));
-      tab.classList.add("is-active");
-      const panel = scope.querySelector(`[data-panel="${tab.dataset.tab}"]`);
-      panel.classList.add("is-active");
-      // reveal newly shown cards
-      panel.querySelectorAll("[data-reveal]").forEach((el, i) => {
-        el.classList.remove("is-visible");
-        setTimeout(() => el.classList.add("is-visible"), i * 60);
-      });
-    });
-  });
-
   /* ---------------- Enquiry form prefill helper ---------------- */
   const interestSelect = document.getElementById("interest");
   const messageField = document.getElementById("message");
