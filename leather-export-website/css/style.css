@@ -326,7 +326,10 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
    ========================================================================== */
 .signature{ padding:110px 0 120px; background:var(--paper); }
 .signature-grid{ grid-template-columns:repeat(3, 1fr); }
-.piece-card{ display:flex; flex-direction:column; padding:20px 20px 26px; cursor:pointer; }
+.piece-card{
+  display:grid; grid-template-rows:subgrid; grid-row:span 4;
+  padding:20px 20px 26px; cursor:pointer;
+}
 .piece-tag{
   position:absolute; top:34px; right:34px; font-size:0.68rem; letter-spacing:0.1em;
   text-transform:uppercase; color:var(--tan); background:var(--paper);
@@ -341,7 +344,7 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
 .piece-card p{ padding:0 6px; }
 .piece-meta{
   display:block; font-size:0.76rem; letter-spacing:0.04em; color:#8a7860;
-  margin-top:auto; padding:6px 6px 0; border-top:1px solid var(--line-light);
+  align-self:end; margin-top:16px; padding:6px 6px 0; border-top:1px solid var(--line-light);
 }
 
 /* ==========================================================================
