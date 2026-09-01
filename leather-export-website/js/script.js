@@ -176,7 +176,6 @@
   const lightboxTitle = document.getElementById("lightboxTitle");
   const lightboxDesc = document.getElementById("lightboxDesc");
   const lightboxMeta = document.getElementById("lightboxMeta");
-  const lightboxPrice = document.getElementById("lightboxPrice");
   const lightboxThumbs = document.getElementById("lightboxThumbs");
   const lightboxCta = document.getElementById("lightboxCta");
   const lightboxPrev = document.getElementById("lightboxPrev");
@@ -242,14 +241,13 @@
     lightboxNext.hidden = !multi;
   }
 
-  function openLightbox({ images, eyebrow, title, desc, meta, price, ctaText, onCta }) {
+  function openLightbox({ images, eyebrow, title, desc, meta, ctaText, onCta }) {
     lbImages = images;
     lbIndex = 0;
     lightboxEyebrow.textContent = eyebrow || "";
     lightboxTitle.textContent = title || "";
     lightboxDesc.textContent = desc || "";
     lightboxMeta.textContent = meta || "";
-    lightboxPrice.textContent = price || "";
     lightboxThumbs.innerHTML = "";
     if (images.length > 1) {
       images.forEach((img, i) => {
@@ -298,12 +296,11 @@
       const title = card.querySelector("h3")?.textContent || "";
       const desc = card.querySelector("p")?.textContent || "";
       const meta = card.querySelector(".piece-meta")?.textContent || "";
-      const price = card.querySelector(".piece-price")?.textContent || "";
       const collection = card.dataset.collection || "Women's Collection";
       openLightbox({
         images: [{ src: img.src, alt: img.alt }],
         eyebrow: `Signature Piece: ${tag}`,
-        title, desc, meta, price,
+        title, desc, meta,
         ctaText: "Enquire About This Piece",
         onCta: () => {
           prefillEnquiry(collection, `I'm interested in the ${title} (Signature Piece).`);
@@ -331,7 +328,6 @@
           title: category,
           desc,
           meta: images.length > 1 ? `${images.length} photos in this range` : "",
-          price: "",
           ctaText: "Enquire About This Range",
           onCta: () => {
             prefillEnquiry(collection, `I'd like more information on the ${category} range.`);

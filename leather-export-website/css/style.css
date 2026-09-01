@@ -343,10 +343,6 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
   display:block; font-size:0.76rem; letter-spacing:0.04em; color:#8a7860;
   margin-top:auto; padding:6px 6px 0; border-top:1px solid var(--line-light);
 }
-.piece-price{
-  display:block; font-family:'Playfair Display', serif; font-size:1.02rem;
-  color:var(--ink); margin-top:10px; padding:0 6px;
-}
 
 /* ==========================================================================
    Craftsmanship
@@ -534,10 +530,8 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
 .lightbox-eyebrow{ font-size:0.72rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--gold); margin-bottom:14px; }
 .lightbox-panel h3{ font-family:'Playfair Display', serif; font-size:1.9rem; color:var(--paper); margin-bottom:16px; line-height:1.15; }
 .lightbox-desc{ font-size:0.98rem; line-height:1.75; color:rgba(246,239,226,0.78); margin-bottom:22px; max-width:44ch; }
-.lightbox-meta{ display:block; font-size:0.85rem; color:rgba(246,239,226,0.6); margin-bottom:8px; }
+.lightbox-meta{ display:block; font-size:0.85rem; color:rgba(246,239,226,0.6); margin-bottom:26px; }
 .lightbox-meta:empty{ display:none; }
-.lightbox-price{ display:block; font-family:'Playfair Display', serif; font-size:1.2rem; color:var(--gold); margin-bottom:26px; }
-.lightbox-price:empty{ display:none; margin-bottom:0; }
 .lightbox-thumbs{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:28px; }
 .lightbox-thumbs:empty{ display:none; margin-bottom:0; }
 .lightbox-thumb{
