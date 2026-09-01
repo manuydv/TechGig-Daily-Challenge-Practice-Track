@@ -576,6 +576,10 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
   .form-row{ grid-template-columns:1fr; }
   .region-list{ grid-template-columns:1fr; }
   .footer-grid{ grid-template-columns:1fr 1fr; }
+  /* Long title + sub-copy + two CTA buttons can run taller than the
+     viewport on mobile; the scroll hint is decorative, so drop it rather
+     than let it overlap the buttons. */
+  .hero-scroll{ display:none; }
 }
 
 @media (max-width: 480px){
