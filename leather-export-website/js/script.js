@@ -210,7 +210,7 @@
   let lbIndex = 0;
   let lastFocused = null;
 
-  function sampleImageBackground(imgEl) {
+  function getImageBgColor(imgEl) {
     try {
       const canvas = document.createElement("canvas");
       canvas.width = 1;
@@ -219,11 +219,27 @@
       // sample a corner pixel — a couple px in to avoid any edge/compression noise
       ctx.drawImage(imgEl, 2, 2, 1, 1, 0, 0, 1, 1);
       const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
-      lightboxMedia.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+      return `rgb(${r}, ${g}, ${b})`;
     } catch (e) {
-      lightboxMedia.style.backgroundColor = "";
+      return "";
     }
   }
+
+  function sampleImageBackground(imgEl) {
+    lightboxMedia.style.backgroundColor = getImageBgColor(imgEl);
+  }
+
+  // Match each Signature Piece photo box's background to its own image's
+  // backdrop, instead of a flat gray — the box's aspect ratio doesn't always
+  // match the photo's, so any mismatch would otherwise show as a visible
+  // border around the (never-cropped) product photo.
+  document.querySelectorAll(".piece-photo").forEach((box) => {
+    const img = box.querySelector("img");
+    if (!img) return;
+    const apply = () => { box.style.backgroundColor = getImageBgColor(img); };
+    if (img.complete && img.naturalWidth) apply();
+    else img.addEventListener("load", apply, { once: true });
+  });
 
   function renderLightboxImage() {
     const img = lbImages[lbIndex];
@@ -397,6 +413,18 @@
   }
 
   /* ---------------- Hero background slideshow (3 columns, staggered crossfade) ---------------- */
+  // Shuffle each column's slide order on load so bags and jackets mix
+  // randomly instead of always opening in the same fixed sequence.
+  document.querySelectorAll(".hero-slideshow-col").forEach((col) => {
+    const slides = [...col.querySelectorAll(".hero-slideshow-slide")];
+    for (let i = slides.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [slides[i], slides[j]] = [slides[j], slides[i]];
+    }
+    slides.forEach((s) => { s.classList.remove("is-active"); col.appendChild(s); });
+    slides[0].classList.add("is-active");
+  });
+
   document.querySelectorAll(".hero-slideshow-col").forEach((col, colIndex) => {
     const slides = col.querySelectorAll(".hero-slideshow-slide");
     if (slides.length < 2 || reduceMotion) return;
