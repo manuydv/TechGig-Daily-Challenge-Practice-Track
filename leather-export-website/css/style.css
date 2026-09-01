@@ -332,6 +332,7 @@ h1,h2,h3{ font-family:'Playfair Display', serif; font-weight:600; letter-spacing
    Signature Pieces
    ========================================================================== */
 .signature{ padding:110px 0 120px; background:var(--paper); }
+.signature-grid{ grid-template-columns:repeat(3, 1fr); }
 .piece-card{ display:flex; flex-direction:column; padding:20px 20px 26px; cursor:pointer; }
 .piece-tag{
   position:absolute; top:34px; right:34px; font-size:0.68rem; letter-spacing:0.1em;

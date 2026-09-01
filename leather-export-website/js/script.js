@@ -296,13 +296,14 @@
       const desc = card.querySelector("p")?.textContent || "";
       const meta = card.querySelector(".piece-meta")?.textContent || "";
       const price = card.querySelector(".piece-price")?.textContent || "";
+      const collection = card.dataset.collection || "Women's Collection";
       openLightbox({
         images: [{ src: img.src, alt: img.alt }],
         eyebrow: `Signature Piece — ${tag}`,
         title, desc, meta, price,
         ctaText: "Enquire About This Piece",
         onCta: () => {
-          prefillEnquiry("Women's Collection", `I'm interested in the ${title} (Signature Piece).`);
+          prefillEnquiry(collection, `I'm interested in the ${title} (Signature Piece).`);
           goToContact();
         },
       });
