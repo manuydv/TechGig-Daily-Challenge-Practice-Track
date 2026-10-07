@@ -1,5 +1,5 @@
 export type Gender = "male" | "female" | "other";
-export type MemberStatus = "active" | "paused" | "inactive";
+export type MemberStatus = "active" | "inactive";
 export type StaffRole = "owner" | "staff";
 export type BusinessType = "yoga_studio" | "gym" | "barbershop" | "salon" | "other";
 export type EmployeeStatus = "active" | "inactive";
