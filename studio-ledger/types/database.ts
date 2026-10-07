@@ -47,6 +47,7 @@ export interface Member {
   check_in_pin: string | null;
   class_id: string | null;
   photo_url: string | null;
+  date_of_birth: string | null; // YYYY-MM-DD
   created_at: string;
   updated_at: string;
 }
@@ -235,6 +236,27 @@ export type Database = {
           batch_days_of_week: number[] | null;
           batch_start_time: string | null;
           batch_duration_minutes: number | null;
+          phone: string | null;
+          email: string | null;
+          date_of_birth: string | null;
+        }[];
+      };
+      public_update_profile: {
+        Args: {
+          intake_slug: string;
+          client_phone: string;
+          pin: string;
+          new_phone: string;
+          new_email?: string | null;
+          new_date_of_birth?: string | null;
+          new_photo_url?: string | null;
+        };
+        Returns: {
+          member_id: string;
+          phone: string;
+          email: string | null;
+          date_of_birth: string | null;
+          photo_url: string | null;
         }[];
       };
     };
