@@ -18,6 +18,11 @@ export interface Studio {
   public_intake_enabled: boolean;
   public_intake_slug: string | null;
   public_checkin_enabled: boolean;
+  contact_phone_1: string | null;
+  contact_phone_2: string | null;
+  contact_email: string | null;
+  contact_address: string | null;
+  website_url: string | null;
   created_at: string;
 }
 
@@ -163,7 +168,15 @@ export type Database = {
       };
       get_intake_studio: {
         Args: { intake_slug: string };
-        Returns: { name: string; business_type: BusinessType }[];
+        Returns: {
+          name: string;
+          business_type: BusinessType;
+          contact_phone_1: string | null;
+          contact_phone_2: string | null;
+          contact_email: string | null;
+          contact_address: string | null;
+          website_url: string | null;
+        }[];
       };
       public_intake_add_client: {
         Args: {
@@ -176,7 +189,15 @@ export type Database = {
       };
       get_checkin_studio: {
         Args: { intake_slug: string };
-        Returns: { name: string; business_type: BusinessType }[];
+        Returns: {
+          name: string;
+          business_type: BusinessType;
+          contact_phone_1: string | null;
+          contact_phone_2: string | null;
+          contact_email: string | null;
+          contact_address: string | null;
+          website_url: string | null;
+        }[];
       };
       get_checkin_schedule: {
         Args: { intake_slug: string };
