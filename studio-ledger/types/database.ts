@@ -91,6 +91,18 @@ export interface Expense {
   updated_at: string;
 }
 
+export interface Class {
+  id: string;
+  studio_id: string;
+  name: string;
+  instructor_name: string | null;
+  days_of_week: number[]; // 0 = Sunday .. 6 = Saturday
+  start_time: string; // HH:MM:SS
+  duration_minutes: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -136,6 +148,12 @@ export type Database = {
         Update: Partial<Expense>;
         Relationships: [];
       };
+      classes: {
+        Row: Class;
+        Insert: Partial<Class> & { studio_id: string; name: string; start_time: string };
+        Update: Partial<Class>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {
@@ -160,9 +178,31 @@ export type Database = {
         Args: { intake_slug: string };
         Returns: { name: string; business_type: BusinessType }[];
       };
+      get_checkin_schedule: {
+        Args: { intake_slug: string };
+        Returns: {
+          name: string;
+          instructor_name: string | null;
+          days_of_week: number[];
+          start_time: string;
+          duration_minutes: number;
+        }[];
+      };
+      public_claim_checkin_pin: {
+        Args: { intake_slug: string; client_phone: string; new_pin: string };
+        Returns: void;
+      };
       public_check_in: {
         Args: { intake_slug: string; client_phone: string; pin: string };
-        Returns: { member_id: string; member_name: string; visited_on: string; recent_visits: string[] }[];
+        Returns: {
+          member_id: string;
+          member_name: string;
+          visited_on: string;
+          recent_visits: string[];
+          monthly_fee: number;
+          member_status: MemberStatus;
+          this_month_paid: boolean;
+        }[];
       };
     };
     Enums: {};
