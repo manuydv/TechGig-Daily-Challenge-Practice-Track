@@ -56,6 +56,7 @@ export default function ClientDetail() {
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [markingPaid, setMarkingPaid] = useState(false);
   const [loggingVisit, setLoggingVisit] = useState(false);
+  const [savingPin, setSavingPin] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -185,6 +186,56 @@ export default function ClientDetail() {
     await load();
   };
 
+  const handleSetPin = async () => {
+    const pin = String(Math.floor(1000 + Math.random() * 9000));
+    setSavingPin(true);
+    const { error: pinError } = await supabase.from("members").update({ check_in_pin: pin }).eq("id", member.id);
+    setSavingPin(false);
+    if (pinError) {
+      window.alert(`Couldn't set PIN: ${pinError.message}`);
+      return;
+    }
+    await load();
+  };
+
+  const handleRemovePin = async () => {
+    setSavingPin(true);
+    const { error: pinError } = await supabase.from("members").update({ check_in_pin: null }).eq("id", member.id);
+    setSavingPin(false);
+    if (pinError) {
+      window.alert(`Couldn't remove PIN: ${pinError.message}`);
+      return;
+    }
+    await load();
+  };
+
+  const checkinPinCard = (
+    <Card className="mb-6">
+      <div className="text-[15px] font-bold text-text">Check-in PIN</div>
+      <p className="mt-1 text-xs leading-relaxed text-text-muted">
+        Lets {member.name.split(" ")[0]} check themselves in on the shared check-in link using their phone number
+        and this PIN, without needing an account.
+      </p>
+      {member.check_in_pin ? (
+        <div className="mt-3 flex items-center justify-between">
+          <div className="text-2xl font-bold tracking-[0.3em] text-text">{member.check_in_pin}</div>
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" onClick={handleSetPin} loading={savingPin}>
+              Change
+            </Button>
+            <Button type="button" variant="danger" onClick={handleRemovePin} loading={savingPin}>
+              Remove
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button type="button" variant="secondary" onClick={handleSetPin} loading={savingPin} className="mt-3 w-full">
+          Set a PIN
+        </Button>
+      )}
+    </Card>
+  );
+
   const detailsForm = (
     <>
       <h2 className="mb-2.5 mt-6 text-[15px] font-bold text-text">{config.personLabelSingular} details</h2>
@@ -248,6 +299,7 @@ export default function ClientDetail() {
             )}
           </Card>
 
+          {checkinPinCard}
           {detailsForm}
         </form>
       </div>
@@ -293,6 +345,7 @@ export default function ClientDetail() {
           })}
         </Card>
 
+        {checkinPinCard}
         {detailsForm}
       </form>
     </div>

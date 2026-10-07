@@ -7,6 +7,7 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import CreateStudio from "@/pages/CreateStudio";
 import Intake from "@/pages/Intake";
+import Checkin from "@/pages/Checkin";
 import ClientsList from "@/pages/clients/ClientsList";
 import ClientNew from "@/pages/clients/ClientNew";
 import ClientDetail from "@/pages/clients/ClientDetail";
@@ -25,6 +26,7 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/intake/:slug" element={<Intake />} />
+        <Route path="/checkin/:slug" element={<Checkin />} />
         <Route
           path="/login"
           element={

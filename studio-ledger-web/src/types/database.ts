@@ -17,6 +17,7 @@ export interface Studio {
   reminder_message: string | null;
   public_intake_enabled: boolean;
   public_intake_slug: string | null;
+  public_checkin_enabled: boolean;
   created_at: string;
 }
 
@@ -38,6 +39,7 @@ export interface Member {
   joined_on: string; // YYYY-MM-DD
   monthly_fee: number;
   status: MemberStatus;
+  check_in_pin: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -153,6 +155,14 @@ export type Database = {
           client_email?: string | null;
         };
         Returns: Member;
+      };
+      get_checkin_studio: {
+        Args: { intake_slug: string };
+        Returns: { name: string; business_type: BusinessType }[];
+      };
+      public_check_in: {
+        Args: { intake_slug: string; client_phone: string; pin: string };
+        Returns: { member_id: string; member_name: string; visited_on: string; recent_visits: string[] }[];
       };
     };
     Enums: {};

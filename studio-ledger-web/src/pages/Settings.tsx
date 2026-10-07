@@ -28,6 +28,7 @@ function SettingsForm() {
   const [reminderMessage, setReminderMessage] = useState(studio!.reminder_message ?? "");
   const [intakeEnabled, setIntakeEnabled] = useState(studio!.public_intake_enabled);
   const [intakeSlug, setIntakeSlug] = useState(studio!.public_intake_slug);
+  const [checkinEnabled, setCheckinEnabled] = useState(studio!.public_checkin_enabled);
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +36,12 @@ function SettingsForm() {
   const handleToggleIntake = () => {
     const next = !intakeEnabled;
     setIntakeEnabled(next);
+    if (next && !intakeSlug) setIntakeSlug(randomSlug());
+  };
+
+  const handleToggleCheckin = () => {
+    const next = !checkinEnabled;
+    setCheckinEnabled(next);
     if (next && !intakeSlug) setIntakeSlug(randomSlug());
   };
 
@@ -54,7 +61,8 @@ function SettingsForm() {
         reminder_days: days,
         reminder_message: reminderMessage.trim() || null,
         public_intake_enabled: intakeEnabled,
-        public_intake_slug: intakeEnabled ? intakeSlug : studio!.public_intake_slug,
+        public_checkin_enabled: checkinEnabled,
+        public_intake_slug: intakeEnabled || checkinEnabled ? intakeSlug : studio!.public_intake_slug,
       })
       .eq("id", studio!.id);
     setSaving(false);
@@ -69,12 +77,43 @@ function SettingsForm() {
 
   const intakeConfig = getBusinessTypeConfig(businessType);
   const intakeLink = intakeSlug ? `${window.location.origin}/intake/${intakeSlug}` : null;
+  const checkinLink = intakeSlug ? `${window.location.origin}/checkin/${intakeSlug}` : null;
 
   return (
     <div>
       <TopBar title="Settings" />
       <form onSubmit={handleSave} className="p-4 pb-10">
         <BusinessTypePicker value={businessType} onChange={setBusinessType} />
+
+        <Card className="mb-4">
+          <div className="flex items-center justify-between">
+            <div className="text-[15px] font-semibold text-text">Self check-in link</div>
+            <button
+              type="button"
+              onClick={handleToggleCheckin}
+              className={`h-7 w-12 rounded-full transition ${checkinEnabled ? "bg-accent" : "bg-surface-raised"}`}
+            >
+              <span
+                className={`block h-5 w-5 translate-y-1 rounded-full bg-white transition ${
+                  checkinEnabled ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-text-muted">
+            Let a {intakeConfig.personLabelSingular.toLowerCase()} check themselves in with their phone number and
+            a PIN (set one from their profile), and see their own streak and attendance — no app install, no
+            account.
+          </p>
+          {checkinEnabled && checkinLink ? (
+            <>
+              <p className="mt-3 text-xs font-semibold text-text-muted">Share this link:</p>
+              <a href={checkinLink} className="mt-1 block break-all text-sm text-accent">
+                {checkinLink}
+              </a>
+            </>
+          ) : null}
+        </Card>
 
         {intakeConfig.mode === "visit" ? (
           <>
