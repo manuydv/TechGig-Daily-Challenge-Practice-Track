@@ -45,6 +45,8 @@ export interface Member {
   monthly_fee: number;
   status: MemberStatus;
   check_in_pin: string | null;
+  class_id: string | null;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -227,6 +229,12 @@ export type Database = {
           monthly_fee: number;
           member_status: MemberStatus;
           this_month_paid: boolean;
+          photo_url: string | null;
+          batch_name: string | null;
+          batch_instructor_name: string | null;
+          batch_days_of_week: number[] | null;
+          batch_start_time: string | null;
+          batch_duration_minutes: number | null;
         }[];
       };
     };
