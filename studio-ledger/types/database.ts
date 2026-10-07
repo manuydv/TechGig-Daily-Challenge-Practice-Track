@@ -263,6 +263,10 @@ export type Database = {
           photo_url: string | null;
         }[];
       };
+      public_mark_self_attendance: {
+        Args: { intake_slug: string; client_phone: string; pin: string };
+        Returns: void;
+      };
     };
     Enums: {};
     CompositeTypes: {};
