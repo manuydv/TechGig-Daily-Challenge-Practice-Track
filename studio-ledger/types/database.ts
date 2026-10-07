@@ -166,6 +166,10 @@ export type Database = {
         Args: { studio_name: string; business_type?: BusinessType };
         Returns: Studio;
       };
+      sync_member_statuses: {
+        Args: Record<string, never>;
+        Returns: void;
+      };
       get_intake_studio: {
         Args: { intake_slug: string };
         Returns: {
