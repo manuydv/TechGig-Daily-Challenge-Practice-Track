@@ -86,6 +86,9 @@ export interface Employee {
   monthly_pay: number;
   status: EmployeeStatus;
   joined_on: string; // YYYY-MM-DD
+  photo_url: string | null;
+  date_of_birth: string | null; // YYYY-MM-DD
+  check_in_pin: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -265,6 +268,46 @@ export type Database = {
       };
       public_mark_self_attendance: {
         Args: { intake_slug: string; client_phone: string; pin: string };
+        Returns: void;
+      };
+      public_trainer_login: {
+        Args: { intake_slug: string; phone: string; pin: string };
+        Returns: {
+          employee_id: string;
+          name: string;
+          photo_url: string | null;
+          role_title: string | null;
+        }[];
+      };
+      public_trainer_classes: {
+        Args: { intake_slug: string; phone: string; pin: string };
+        Returns: Class[];
+      };
+      public_trainer_roster: {
+        Args: {
+          intake_slug: string;
+          phone: string;
+          pin: string;
+          class_filter: string;
+          for_date: string;
+        };
+        Returns: {
+          member_id: string;
+          name: string;
+          member_phone: string | null;
+          photo_url: string | null;
+          present: boolean;
+        }[];
+      };
+      public_trainer_toggle_attendance: {
+        Args: {
+          intake_slug: string;
+          phone: string;
+          pin: string;
+          target_member_id: string;
+          for_date: string;
+          present: boolean;
+        };
         Returns: void;
       };
     };
