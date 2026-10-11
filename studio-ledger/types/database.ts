@@ -23,6 +23,9 @@ export interface Studio {
   contact_email: string | null;
   contact_address: string | null;
   website_url: string | null;
+  instagram_url: string | null;
+  google_url: string | null;
+  map_url: string | null;
   upi_id: string | null;
   payment_qr_url: string | null;
   created_at: string;
@@ -209,6 +212,9 @@ export type Database = {
           contact_email: string | null;
           contact_address: string | null;
           website_url: string | null;
+          instagram_url: string | null;
+          google_url: string | null;
+          map_url: string | null;
           upi_id: string | null;
           payment_qr_url: string | null;
         }[];
