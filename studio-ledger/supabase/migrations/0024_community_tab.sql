@@ -176,8 +176,12 @@ grant execute on function public.public_checkin_community(text, text, text) to a
 -- ---------------------------------------------------------------------------
 -- public_check_in: also return a lifetime visit count, for the "N classes
 -- completed" milestone badge on the account tab. recent_visits is capped
--- to the last 70 days, so it can't be used for this.
+-- to the last 70 days, so it can't be used for this. The return columns
+-- are changing shape, which create or replace can't do on its own —
+-- drop first.
 -- ---------------------------------------------------------------------------
+
+drop function if exists public.public_check_in(text, text, text);
 
 create or replace function public.public_check_in(
   intake_slug text,
