@@ -28,6 +28,13 @@ export interface Studio {
   map_url: string | null;
   upi_id: string | null;
   payment_qr_url: string | null;
+  announcement_text: string | null;
+  spotlight_1_title: string | null;
+  spotlight_1_name: string | null;
+  spotlight_1_photo_url: string | null;
+  spotlight_2_title: string | null;
+  spotlight_2_name: string | null;
+  spotlight_2_photo_url: string | null;
   created_at: string;
 }
 
@@ -119,6 +126,13 @@ export interface Class {
   updated_at: string;
 }
 
+export interface GalleryPhoto {
+  id: string;
+  studio_id: string;
+  photo_url: string;
+  created_at: string;
+}
+
 export type CheckinAction = "checkin" | "claim_pin" | "update_profile" | "self_attendance" | "trainer_login";
 
 export interface CheckinAttempt {
@@ -187,6 +201,12 @@ export type Database = {
         Row: CheckinAttempt;
         Insert: never;
         Update: never;
+        Relationships: [];
+      };
+      gallery_photos: {
+        Row: GalleryPhoto;
+        Insert: Partial<GalleryPhoto> & { studio_id: string; photo_url: string };
+        Update: Partial<GalleryPhoto>;
         Relationships: [];
       };
     };
@@ -259,6 +279,7 @@ export type Database = {
           member_name: string;
           visited_on: string;
           recent_visits: string[];
+          total_visits: number;
           monthly_fee: number;
           member_status: MemberStatus;
           this_month_paid: boolean;
@@ -295,6 +316,21 @@ export type Database = {
       public_mark_self_attendance: {
         Args: { intake_slug: string; client_phone: string; pin: string };
         Returns: void;
+      };
+      public_checkin_community: {
+        Args: { intake_slug: string; client_phone: string; pin: string };
+        Returns: {
+          announcement_text: string | null;
+          spotlight_1_title: string | null;
+          spotlight_1_name: string | null;
+          spotlight_1_photo_url: string | null;
+          spotlight_2_title: string | null;
+          spotlight_2_name: string | null;
+          spotlight_2_photo_url: string | null;
+          gallery_photo_urls: string[];
+          birthday_names: string[];
+          birthday_days: number[];
+        }[];
       };
       public_trainer_login: {
         Args: { intake_slug: string; phone: string; pin: string };
