@@ -119,6 +119,19 @@ export interface Class {
   updated_at: string;
 }
 
+export type CheckinAction = "checkin" | "claim_pin" | "update_profile" | "self_attendance" | "trainer_login";
+
+export interface CheckinAttempt {
+  id: number;
+  studio_id: string;
+  phone_key: string;
+  success: boolean;
+  action: CheckinAction;
+  member_id: string | null;
+  employee_id: string | null;
+  attempted_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -168,6 +181,12 @@ export type Database = {
         Row: Class;
         Insert: Partial<Class> & { studio_id: string; name: string; start_time: string };
         Update: Partial<Class>;
+        Relationships: [];
+      };
+      checkin_attempts: {
+        Row: CheckinAttempt;
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
     };
