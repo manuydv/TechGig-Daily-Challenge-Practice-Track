@@ -263,6 +263,7 @@ export type Database = {
           member_status: MemberStatus;
           this_month_paid: boolean;
           photo_url: string | null;
+          gender: Gender | null;
           batch_name: string | null;
           batch_instructor_name: string | null;
           batch_days_of_week: number[] | null;
@@ -321,6 +322,7 @@ export type Database = {
           name: string;
           member_phone: string | null;
           photo_url: string | null;
+          gender: Gender | null;
           present: boolean;
         }[];
       };
